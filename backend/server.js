@@ -1,13 +1,10 @@
-const express = require('express');
-const app = express();
-const userRoutes = require('./routes/user');
-const mainRoutes = require('./routes/routes');
+const mongoose = require('mongoose');
 
-app.use(express.json());
-app.use('/api/users', userRoutes); // Ruta para los usuarios
-app.use('/', mainRoutes); // Ruta principal
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+mongoose.connect('mongodb://localhost:27017/tu_base_de_datos', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch(err => {
+    console.error('Failed to connect to MongoDB', err);
 });
