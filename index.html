@@ -3,61 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Super Cute</title>
+    <title>Cajón de Chat con Perfiles</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Bienvenido a mi Web Super Cute</h1>
+        <h1>Chat con Perfiles</h1>
     </header>
     <main>
-        <section class="cute-section">
-            <h2>¡Esto es super cute!</h2>
-            <p>Contenido adorable aquí.</p>
-        </section>
+        <div class="chat-container">
+            <div class="profile-section">
+                <h2>Perfil</h2>
+                <img src="profile.jpg" alt="Foto de perfil">
+                <p>Nombre: Usuario</p>
+            </div>
+            <div class="chat-section">
+                <div class="chat-box">
+                    <div class="message">Hola, ¿cómo estás?</div>
+                    <div class="message message-user">¡Estoy bien, gracias!</div>
+                </div>
+                <input type="text" placeholder="Escribe un mensaje..." class="chat-input">
+            </div>
+        </div>
     </main>
     <footer>
-        <p>&copy; 2025 Mi Web Super Cute</p>
+        <p>&copy; 2025 Chat con Perfiles</p>
     </footer>
 </body>
-</html>body {
-    font-family: 'Comic Sans MS', cursive, sans-serif;
-    background-color: #FFEBF0;
-    color: #333;
-    text-align: center;
-    margin: 0;
-    padding: 0;
-}
-
-header {
-    background-color: #FFB6C1;
-    padding: 20px;
-}
-
-h1 {
-    font-size: 3em;
-    color: #fff;
-}
-
-main {
-    padding: 20px;
-}
-
-.cute-section {
-    background-color: #FFF0F5;
-    border: 2px solid #FFB6C1;
-    border-radius: 10px;
-    padding: 20px;
-    display: inline-block;
-    margin: 20px 0;
-}
-
-footer {
-    background-color: #FFB6C1;
-    padding: 10px;
-    position: fixed;
-    width: 100%;
-    bottom: 0;
-    left: 0;
-    color: #fff;
-}
+</html>
