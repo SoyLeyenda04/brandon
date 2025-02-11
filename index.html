@@ -7,7 +7,21 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+        }
+        .number-container {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 200px;
         }
         .number {
             display: inline-block;
@@ -20,17 +34,23 @@
             background-color: #4CAF50;
             color: white;
         }
+        .form-container {
+            margin-left: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Rifa Online</h1>
-    <div id="numbers"></div>
-    <p id="selected-number"></p>
-    <form id="raffle-form" style="display:none;">
-        <label for="name">Nombre:</label>
-        <input type="text" id="name" name="name" required>
-        <button type="submit">Guardar y Enviar Dinero</button>
-    </form>
+    <div class="container">
+        <div class="number-container" id="numbers"></div>
+        <div class="form-container">
+            <p id="selected-number"></p>
+            <form id="raffle-form" style="display:none;">
+                <label for="name">Nombre:</label>
+                <input type="text" id="name" name="name" required>
+                <button type="submit">Guardar y Enviar Dinero</button>
+            </form>
+        </div>
+    </div>
 
     <script>
         const numbersDiv = document.getElementById('numbers');
