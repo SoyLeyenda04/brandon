@@ -62,6 +62,7 @@
     <div class="selected-numbers-container">
         <h2>Números Seleccionados</h2>
         <ul id="selected-numbers-list"></ul>
+        <button id="reset-button">Reiniciar Rifa</button>
     </div>
 
     <script>
@@ -71,6 +72,7 @@
             const raffleForm = document.getElementById('raffle-form');
             const nameInput = document.getElementById('name');
             const selectedNumbersList = document.getElementById('selected-numbers-list');
+            const resetButton = document.getElementById('reset-button');
 
             const loadSavedData = () => {
                 const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
@@ -91,7 +93,13 @@
 
             const addSelectedNumberToList = (number, name) => {
                 const listItem = document.createElement('li');
-                listItem.textContent = `Número: ${number}, Nombre: ${name}`;
+                listItem.textContent = `Número: ${number}, Nombre: ${name} `;
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.onclick = () => {
+                    removeSelectedNumber(number, listItem);
+                };
+                listItem.appendChild(deleteButton);
                 selectedNumbersList.appendChild(listItem);
                 saveSelectedNumber(number, name);
             };
@@ -102,12 +110,42 @@
                 localStorage.setItem('selectedNumbers', JSON.stringify(savedNumbers));
             };
 
+            const removeSelectedNumber = (number, listItem) => {
+                let savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
+                savedNumbers = savedNumbers.filter(entry => entry.number !== number);
+                localStorage.setItem('selectedNumbers', JSON.stringify(savedNumbers));
+                listItem.remove();
+                enableNumber(number);
+            };
+
             const disableNumber = (number) => {
                 const numberDiv = Array.from(document.getElementsByClassName('number')).find(div => div.textContent == number);
                 if (numberDiv) {
                     numberDiv.classList.add('disabled');
                     numberDiv.onclick = null;
                 }
+            };
+
+            const enableNumber = (number) => {
+                const numberDiv = Array.from(document.getElementsByClassName('number')).find(div => div.textContent == number);
+                if (numberDiv) {
+                    numberDiv.classList.remove('disabled');
+                    numberDiv.onclick = () => handleNumberClick(numberDiv, number);
+                }
+            };
+
+            const resetRaffle = () => {
+                localStorage.removeItem('selectedNumbers');
+                localStorage.removeItem('selectedNumber');
+                localStorage.removeItem('userName');
+                selectedNumbersList.innerHTML = '';
+                document.querySelectorAll('.number').forEach(el => {
+                    el.classList.remove('selected', 'disabled');
+                    el.onclick = () => handleNumberClick(el, el.textContent);
+                });
+                raffleForm.style.display = 'none';
+                selectedNumberP.textContent = '';
+                nameInput.value = '';
             };
 
             for (let i = 1; i <= 100; i++) {
@@ -128,6 +166,8 @@
                     disableNumber(selectedNumber);
                 }
             };
+
+            resetButton.onclick = resetRaffle;
 
             loadSavedData();
         });
