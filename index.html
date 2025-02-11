@@ -69,14 +69,11 @@
             const selectedNumbersList = document.getElementById('selected-numbers-list');
 
             const loadSavedData = () => {
-                const savedNumber = localStorage.getItem('selectedNumber');
-                const savedName = localStorage.getItem('userName');
-                if (savedNumber && savedName) {
-                    selectedNumberP.textContent = `Número seleccionado: ${savedNumber} por ${savedName}`;
-                    raffleForm.style.display = 'block';
-                    nameInput.value = savedName;
-                    addSelectedNumberToList(savedNumber, savedName);
-                }
+                const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
+                savedNumbers.forEach(({ number, name }) => {
+                    addSelectedNumberToList(number, name);
+                    highlightNumber(number);
+                });
             };
 
             const handleNumberClick = (numberDiv, i) => {
@@ -91,6 +88,20 @@
                 const listItem = document.createElement('li');
                 listItem.textContent = `Número: ${number}, Nombre: ${name}`;
                 selectedNumbersList.appendChild(listItem);
+                saveSelectedNumber(number, name);
+            };
+
+            const saveSelectedNumber = (number, name) => {
+                const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
+                savedNumbers.push({ number, name });
+                localStorage.setItem('selectedNumbers', JSON.stringify(savedNumbers));
+            };
+
+            const highlightNumber = (number) => {
+                const numberDiv = Array.from(document.getElementsByClassName('number')).find(div => div.textContent == number);
+                if (numberDiv) {
+                    numberDiv.classList.add('selected');
+                }
             };
 
             for (let i = 1; i <= 100; i++) {
@@ -104,9 +115,8 @@
             raffleForm.onsubmit = (event) => {
                 event.preventDefault();
                 const name = nameInput.value;
-                if (name) {
-                    const selectedNumber = localStorage.getItem('selectedNumber');
-                    localStorage.setItem('userName', name);
+                const selectedNumber = localStorage.getItem('selectedNumber');
+                if (name && selectedNumber) {
                     alert(`Número y nombre guardados correctamente. Enlace para enviar dinero: https://example.com/payment?number=${selectedNumber}&name=${name}`);
                     addSelectedNumberToList(selectedNumber, name);
                 }
