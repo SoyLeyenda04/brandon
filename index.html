@@ -41,6 +41,10 @@
         .selected-numbers-container {
             margin-left: 40px;
         }
+        .disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -72,11 +76,12 @@
                 const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
                 savedNumbers.forEach(({ number, name }) => {
                     addSelectedNumberToList(number, name);
-                    highlightNumber(number);
+                    disableNumber(number);
                 });
             };
 
             const handleNumberClick = (numberDiv, i) => {
+                if (numberDiv.classList.contains('disabled')) return;
                 document.querySelectorAll('.number').forEach(el => el.classList.remove('selected'));
                 numberDiv.classList.add('selected');
                 selectedNumberP.textContent = `Número seleccionado: ${i}`;
@@ -97,10 +102,11 @@
                 localStorage.setItem('selectedNumbers', JSON.stringify(savedNumbers));
             };
 
-            const highlightNumber = (number) => {
+            const disableNumber = (number) => {
                 const numberDiv = Array.from(document.getElementsByClassName('number')).find(div => div.textContent == number);
                 if (numberDiv) {
-                    numberDiv.classList.add('selected');
+                    numberDiv.classList.add('disabled');
+                    numberDiv.onclick = null;
                 }
             };
 
@@ -119,6 +125,7 @@
                 if (name && selectedNumber) {
                     alert(`Número y nombre guardados correctamente. Enlace para enviar dinero: https://example.com/payment?number=${selectedNumber}&name=${name}`);
                     addSelectedNumberToList(selectedNumber, name);
+                    disableNumber(selectedNumber);
                 }
             };
 
