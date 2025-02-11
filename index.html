@@ -26,19 +26,25 @@
     <h1>Rifa Online</h1>
     <div id="numbers"></div>
     <p id="selected-number"></p>
-    <a id="payment-link" href="#" style="display:none;">Enviar Dinero</a>
+    <form id="raffle-form" style="display:none;">
+        <label for="name">Nombre:</label>
+        <input type="text" id="name" name="name" required>
+        <button type="submit">Guardar y Enviar Dinero</button>
+    </form>
 
     <script>
         const numbersDiv = document.getElementById('numbers');
         const selectedNumberP = document.getElementById('selected-number');
-        const paymentLink = document.getElementById('payment-link');
+        const raffleForm = document.getElementById('raffle-form');
+        const nameInput = document.getElementById('name');
 
-        // Load selected number from localStorage
+        // Load selected number and name from localStorage
         const savedNumber = localStorage.getItem('selectedNumber');
-        if (savedNumber) {
-            selectedNumberP.textContent = 'Número seleccionado: ' + savedNumber;
-            paymentLink.href = 'https://example.com/payment?number=' + savedNumber;
-            paymentLink.style.display = 'inline';
+        const savedName = localStorage.getItem('userName');
+        if (savedNumber && savedName) {
+            selectedNumberP.textContent = 'Número seleccionado: ' + savedNumber + ' por ' + savedName;
+            raffleForm.style.display = 'block';
+            nameInput.value = savedName;
         }
 
         for (let i = 1; i <= 100; i++) {
@@ -49,13 +55,21 @@
                 document.querySelectorAll('.number').forEach(el => el.classList.remove('selected'));
                 numberDiv.classList.add('selected');
                 selectedNumberP.textContent = 'Número seleccionado: ' + i;
-                paymentLink.href = 'https://example.com/payment?number=' + i;
-                paymentLink.style.display = 'inline';
+                raffleForm.style.display = 'block';
                 // Save selected number to localStorage
                 localStorage.setItem('selectedNumber', i);
             };
             numbersDiv.appendChild(numberDiv);
         }
+
+        raffleForm.onsubmit = function(event) {
+            event.preventDefault();
+            const name = nameInput.value;
+            if (name) {
+                localStorage.setItem('userName', name);
+                alert('Número y nombre guardados correctamente. Enlace para enviar dinero: https://example.com/payment?number=' + localStorage.getItem('selectedNumber') + '&name=' + name);
+            }
+        };
     </script>
 </body>
 </html>
