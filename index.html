@@ -8,10 +8,11 @@
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: flex-start;
             height: 100vh;
             margin: 0;
+            padding: 20px;
         }
         .container {
             display: flex;
@@ -37,6 +38,9 @@
         .form-container {
             margin-left: 20px;
         }
+        .selected-numbers-container {
+            margin-left: 40px;
+        }
     </style>
 </head>
 <body>
@@ -51,45 +55,65 @@
             </form>
         </div>
     </div>
+    <div class="selected-numbers-container">
+        <h2>Números Seleccionados</h2>
+        <ul id="selected-numbers-list"></ul>
+    </div>
 
     <script>
-        const numbersDiv = document.getElementById('numbers');
-        const selectedNumberP = document.getElementById('selected-number');
-        const raffleForm = document.getElementById('raffle-form');
-        const nameInput = document.getElementById('name');
+        document.addEventListener('DOMContentLoaded', () => {
+            const numbersDiv = document.getElementById('numbers');
+            const selectedNumberP = document.getElementById('selected-number');
+            const raffleForm = document.getElementById('raffle-form');
+            const nameInput = document.getElementById('name');
+            const selectedNumbersList = document.getElementById('selected-numbers-list');
 
-        // Load selected number and name from localStorage
-        const savedNumber = localStorage.getItem('selectedNumber');
-        const savedName = localStorage.getItem('userName');
-        if (savedNumber && savedName) {
-            selectedNumberP.textContent = 'Número seleccionado: ' + savedNumber + ' por ' + savedName;
-            raffleForm.style.display = 'block';
-            nameInput.value = savedName;
-        }
+            const loadSavedData = () => {
+                const savedNumber = localStorage.getItem('selectedNumber');
+                const savedName = localStorage.getItem('userName');
+                if (savedNumber && savedName) {
+                    selectedNumberP.textContent = `Número seleccionado: ${savedNumber} por ${savedName}`;
+                    raffleForm.style.display = 'block';
+                    nameInput.value = savedName;
+                    addSelectedNumberToList(savedNumber, savedName);
+                }
+            };
 
-        for (let i = 1; i <= 100; i++) {
-            const numberDiv = document.createElement('div');
-            numberDiv.textContent = i;
-            numberDiv.className = 'number';
-            numberDiv.onclick = function() {
+            const handleNumberClick = (numberDiv, i) => {
                 document.querySelectorAll('.number').forEach(el => el.classList.remove('selected'));
                 numberDiv.classList.add('selected');
-                selectedNumberP.textContent = 'Número seleccionado: ' + i;
+                selectedNumberP.textContent = `Número seleccionado: ${i}`;
                 raffleForm.style.display = 'block';
-                // Save selected number to localStorage
                 localStorage.setItem('selectedNumber', i);
             };
-            numbersDiv.appendChild(numberDiv);
-        }
 
-        raffleForm.onsubmit = function(event) {
-            event.preventDefault();
-            const name = nameInput.value;
-            if (name) {
-                localStorage.setItem('userName', name);
-                alert('Número y nombre guardados correctamente. Enlace para enviar dinero: https://example.com/payment?number=' + localStorage.getItem('selectedNumber') + '&name=' + name);
+            const addSelectedNumberToList = (number, name) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `Número: ${number}, Nombre: ${name}`;
+                selectedNumbersList.appendChild(listItem);
+            };
+
+            for (let i = 1; i <= 100; i++) {
+                const numberDiv = document.createElement('div');
+                numberDiv.textContent = i;
+                numberDiv.className = 'number';
+                numberDiv.onclick = () => handleNumberClick(numberDiv, i);
+                numbersDiv.appendChild(numberDiv);
             }
-        };
+
+            raffleForm.onsubmit = (event) => {
+                event.preventDefault();
+                const name = nameInput.value;
+                if (name) {
+                    const selectedNumber = localStorage.getItem('selectedNumber');
+                    localStorage.setItem('userName', name);
+                    alert(`Número y nombre guardados correctamente. Enlace para enviar dinero: https://example.com/payment?number=${selectedNumber}&name=${name}`);
+                    addSelectedNumberToList(selectedNumber, name);
+                }
+            };
+
+            loadSavedData();
+        });
     </script>
 </body>
 </html>
