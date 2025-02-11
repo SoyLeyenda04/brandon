@@ -33,6 +33,14 @@
         const selectedNumberP = document.getElementById('selected-number');
         const paymentLink = document.getElementById('payment-link');
 
+        // Load selected number from localStorage
+        const savedNumber = localStorage.getItem('selectedNumber');
+        if (savedNumber) {
+            selectedNumberP.textContent = 'Número seleccionado: ' + savedNumber;
+            paymentLink.href = 'https://example.com/payment?number=' + savedNumber;
+            paymentLink.style.display = 'inline';
+        }
+
         for (let i = 1; i <= 100; i++) {
             const numberDiv = document.createElement('div');
             numberDiv.textContent = i;
@@ -43,6 +51,8 @@
                 selectedNumberP.textContent = 'Número seleccionado: ' + i;
                 paymentLink.href = 'https://example.com/payment?number=' + i;
                 paymentLink.style.display = 'inline';
+                // Save selected number to localStorage
+                localStorage.setItem('selectedNumber', i);
             };
             numbersDiv.appendChild(numberDiv);
         }
