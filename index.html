@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rifa Online</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .number {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+        .selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rifa Online</h1>
+    <div id="numbers"></div>
+    <p id="selected-number"></p>
+    <a id="payment-link" href="#" style="display:none;">Enviar Dinero</a>
+
+    <script>
+        const numbersDiv = document.getElementById('numbers');
+        const selectedNumberP = document.getElementById('selected-number');
+        const paymentLink = document.getElementById('payment-link');
+
+        for (let i = 1; i <= 100; i++) {
+            const numberDiv = document.createElement('div');
+            numberDiv.textContent = i;
+            numberDiv.className = 'number';
+            numberDiv.onclick = function() {
+                document.querySelectorAll('.number').forEach(el => el.classList.remove('selected'));
+                numberDiv.classList.add('selected');
+                selectedNumberP.textContent = 'Número seleccionado: ' + i;
+                paymentLink.href = 'https://example.com/payment?number=' + i;
+                paymentLink.style.display = 'inline';
+            };
+            numbersDiv.appendChild(numberDiv);
+        }
+    </script>
+</body>
+</html>
