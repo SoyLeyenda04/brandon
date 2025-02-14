@@ -106,8 +106,10 @@
 
             const saveSelectedNumber = (number, name) => {
                 const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
-                savedNumbers.push({ number, name });
-                localStorage.setItem('selectedNumbers', JSON.stringify(savedNumbers));
+                if (!savedNumbers.some(entry => entry.number === number)) {
+                    savedNumbers.push({ number, name });
+                    localStorage.setItem('selectedNumbers', JSON.stringify(savedNumbers));
+                }
             };
 
             const removeSelectedNumber = (number, listItem) => {
