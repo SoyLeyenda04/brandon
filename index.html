@@ -112,6 +112,7 @@
 
             const handleNumberClick = (numberDiv, i) => {
                 if (numberDiv.classList.contains('disabled')) return;
+                if (document.querySelector('.number.selected')) return; // Prevent selecting more than one number
                 document.querySelectorAll('.number').forEach(el => el.classList.remove('selected'));
                 numberDiv.classList.add('selected');
                 selectedNumberP.textContent = `Número seleccionado: ${i}`;
