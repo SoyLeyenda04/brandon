@@ -45,6 +45,22 @@
             background-color: #ccc;
             cursor: not-allowed;
         }
+        #wheel {
+            width: 300px;
+            height: 300px;
+            border: 2px solid #000;
+            border-radius: 50%;
+            margin-top: 20px;
+            position: relative;
+        }
+        #wheel .participant {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            text-align: right;
+            padding-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -55,6 +71,8 @@
             <form id="raffle-form" style="display:none;">
                 <label for="name">Nombre:</label>
                 <input type="text" id="name" name="name" required>
+                <label for="phone">Número Telefónico:</label>
+                <input type="tel" id="phone" name="phone" required>
                 <button type="submit">Guardar y Enviar Dinero</button>
             </form>
         </div>
@@ -64,6 +82,10 @@
         <ul id="selected-numbers-list"></ul>
         <button id="reset-button">Reiniciar Rifa</button>
     </div>
+    <div id="wheel"></div>
+    <div>
+        <p>Tiempo restante: <span id="timer"></span></p>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -71,13 +93,19 @@
             const selectedNumberP = document.getElementById('selected-number');
             const raffleForm = document.getElementById('raffle-form');
             const nameInput = document.getElementById('name');
+            const phoneInput = document.getElementById('phone');
             const selectedNumbersList = document.getElementById('selected-numbers-list');
             const resetButton = document.getElementById('reset-button');
+            const wheel = document.getElementById('wheel');
+            const timer = document.getElementById('timer');
+
+            const deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 1 week from now
+            const countdownDate = new Date(Date.now() + 70 * 60 * 60 * 1000); // 70 hours from now
 
             const loadSavedData = () => {
                 const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
-                savedNumbers.forEach(({ number, name }) => {
-                    addSelectedNumberToList(number, name);
+                savedNumbers.forEach(({ number, name, phone }) => {
+                    addSelectedNumberToList(number, name, phone);
                     disableNumber(number);
                 });
             };
@@ -91,9 +119,9 @@
                 localStorage.setItem('selectedNumber', i);
             };
 
-            const addSelectedNumberToList = (number, name) => {
+            const addSelectedNumberToList = (number, name, phone) => {
                 const listItem = document.createElement('li');
-                listItem.textContent = `Número: ${number}, Nombre: ${name} `;
+                listItem.textContent = `Número: ${number}, Nombre: ${name}, Teléfono: ${phone} `;
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = 'Eliminar';
                 deleteButton.onclick = () => {
@@ -101,13 +129,14 @@
                 };
                 listItem.appendChild(deleteButton);
                 selectedNumbersList.appendChild(listItem);
-                saveSelectedNumber(number, name);
+                saveSelectedNumber(number, name, phone);
+                addParticipantToWheel(name);
             };
 
-            const saveSelectedNumber = (number, name) => {
+            const saveSelectedNumber = (number, name, phone) => {
                 const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
                 if (!savedNumbers.some(entry => entry.number === number)) {
-                    savedNumbers.push({ number, name });
+                    savedNumbers.push({ number, name, phone });
                     localStorage.setItem('selectedNumbers', JSON.stringify(savedNumbers));
                 }
             };
@@ -118,6 +147,7 @@
                 localStorage.setItem('selectedNumbers', JSON.stringify(savedNumbers));
                 listItem.remove();
                 enableNumber(number);
+                removeParticipantFromWheel(number);
             };
 
             const disableNumber = (number) => {
@@ -148,6 +178,57 @@
                 raffleForm.style.display = 'none';
                 selectedNumberP.textContent = '';
                 nameInput.value = '';
+                phoneInput.value = '';
+                wheel.innerHTML = '';
+            };
+
+            const addParticipantToWheel = (name) => {
+                const participantDiv = document.createElement('div');
+                participantDiv.className = 'participant';
+                participantDiv.textContent = name;
+                const angle = (360 / selectedNumbersList.childElementCount);
+                participantDiv.style.transform = `rotate(${angle}deg) translate(100%)`;
+                wheel.appendChild(participantDiv);
+            };
+
+            const removeParticipantFromWheel = (number) => {
+                const participantDiv = Array.from(wheel.getElementsByClassName('participant')).find(div => div.textContent.includes(number));
+                if (participantDiv) {
+                    participantDiv.remove();
+                }
+            };
+
+            const updateTimer = () => {
+                const now = new Date().getTime();
+                const distance = countdownDate - now;
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                timer.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+                if (distance < 0) {
+                    clearInterval(timerInterval);
+                    timer.textContent = "Tiempo terminado";
+                    runRaffle();
+                }
+            };
+
+            const runRaffle = () => {
+                const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
+                if (savedNumbers.length > 0) {
+                    const winner = savedNumbers[Math.floor(Math.random() * savedNumbers.length)];
+                    alert(`El ganador es: ${winner.name} con el número ${winner.number}`);
+                    sendWhatsAppMessage(winner.phone, `¡Felicidades ${winner.name}! Has ganado la rifa con el número ${winner.number}.`);
+                } else {
+                    alert('No hay participantes.');
+                }
+            };
+
+            const sendWhatsAppMessage = (phone, message) => {
+                const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
             };
 
             for (let i = 1; i <= 100; i++) {
@@ -161,10 +242,11 @@
             raffleForm.onsubmit = (event) => {
                 event.preventDefault();
                 const name = nameInput.value;
+                const phone = phoneInput.value;
                 const selectedNumber = localStorage.getItem('selectedNumber');
-                if (name && selectedNumber) {
-                    alert(`Número y nombre guardados correctamente. Enlace para enviar dinero: https://example.com/payment?number=${selectedNumber}&name=${name}`);
-                    addSelectedNumberToList(selectedNumber, name);
+                if (name && phone && selectedNumber) {
+                    alert(`Número, nombre y teléfono guardados correctamente. Enlace para enviar dinero: https://example.com/payment?number=${selectedNumber}&name=${name}&phone=${phone}`);
+                    addSelectedNumberToList(selectedNumber, name, phone);
                     disableNumber(selectedNumber);
                 }
             };
@@ -172,6 +254,7 @@
             resetButton.onclick = resetRaffle;
 
             loadSavedData();
+            const timerInterval = setInterval(updateTimer, 1000);
         });
     </script>
 </body>
