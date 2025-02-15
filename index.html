@@ -3,260 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rifa Online</title>
+    <title>Burbujas de Amor</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            height: 100vh;
+            background-color: #ffe6f2;
+            overflow: hidden;
             margin: 0;
-            padding: 20px;
-        }
-        .container {
+            height: 100vh;
             display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-        }
-        .number-container {
-            display: flex;
-            flex-wrap: wrap;
-            max-width: 200px;
-        }
-        .number {
-            display: inline-block;
-            margin: 5px;
-            padding: 10px;
-            border: 1px solid #000;
-            cursor: pointer;
-        }
-        .selected {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .form-container {
-            margin-left: 20px;
-        }
-        .selected-numbers-container {
-            margin-left: 40px;
-        }
-        .disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        #wheel {
-            width: 300px;
-            height: 300px;
-            border: 2px solid #000;
-            border-radius: 50%;
-            margin-top: 20px;
+            justify-content: center;
+            align-items: center;
             position: relative;
+            font-family: Arial, sans-serif;
         }
-        #wheel .participant {
+        .bubble {
             position: absolute;
-            width: 50%;
-            height: 50%;
-            transform-origin: 100% 100%;
-            text-align: right;
-            padding-right: 10px;
+            bottom: -50px;
+            width: 100px;
+            height: 100px;
+            background-color: rgba(255, 105, 180, 0.7);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+            animation: float 7s linear infinite, bounce 1s infinite alternate;
+        }
+        @keyframes float {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-110vh); opacity: 0; }
+        }
+        @keyframes bounce {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(15px); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="number-container" id="numbers"></div>
-        <div class="form-container">
-            <p id="selected-number"></p>
-            <form id="raffle-form" style="display:none;">
-                <label for="name">Nombre:</label>
-                <input type="text" id="name" name="name" required>
-                <label for="phone">Número Telefónico:</label>
-                <input type="tel" id="phone" name="phone" required>
-                <button type="submit">Guardar y Enviar Dinero</button>
-            </form>
-        </div>
-    </div>
-    <div class="selected-numbers-container">
-        <h2>Números Seleccionados</h2>
-        <ul id="selected-numbers-list"></ul>
-        <button id="reset-button">Reiniciar Rifa</button>
-    </div>
-    <div id="wheel"></div>
-    <div>
-        <p>Tiempo restante: <span id="timer"></span></p>
-    </div>
-
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const numbersDiv = document.getElementById('numbers');
-            const selectedNumberP = document.getElementById('selected-number');
-            const raffleForm = document.getElementById('raffle-form');
-            const nameInput = document.getElementById('name');
-            const phoneInput = document.getElementById('phone');
-            const selectedNumbersList = document.getElementById('selected-numbers-list');
-            const resetButton = document.getElementById('reset-button');
-            const wheel = document.getElementById('wheel');
-            const timer = document.getElementById('timer');
+        function createBubble() {
+            const bubble = document.createElement("div");
+            bubble.classList.add("bubble");
+            bubble.textContent = "Te amo, hasta la eternidad 💖";
+            document.body.appendChild(bubble);
 
-            const deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 1 week from now
-            const countdownDate = new Date(Date.now() + 70 * 60 * 60 * 1000); // 70 hours from now
+            let leftPosition = Math.random() * window.innerWidth;
+            bubble.style.left = `${leftPosition}px`;
 
-            const loadSavedData = () => {
-                const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
-                savedNumbers.forEach(({ number, name, phone }) => {
-                    addSelectedNumberToList(number, name, phone);
-                    disableNumber(number);
-                });
-            };
+            setTimeout(() => {
+                bubble.remove();
+            }, 7000); // La burbuja desaparece después de 7s para liberar memoria
+        }
 
-            const handleNumberClick = (numberDiv, i) => {
-                if (numberDiv.classList.contains('disabled')) return;
-                if (document.querySelector('.number.selected')) return; // Prevent selecting more than one number
-                document.querySelectorAll('.number').forEach(el => el.classList.remove('selected'));
-                numberDiv.classList.add('selected');
-                selectedNumberP.textContent = `Número seleccionado: ${i}`;
-                raffleForm.style.display = 'block';
-                localStorage.setItem('selectedNumber', i);
-            };
-
-            const addSelectedNumberToList = (number, name, phone) => {
-                const listItem = document.createElement('li');
-                listItem.textContent = `Número: ${number}, Nombre: ${name}, Teléfono: ${phone} `;
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Eliminar';
-                deleteButton.onclick = () => {
-                    removeSelectedNumber(number, listItem);
-                };
-                listItem.appendChild(deleteButton);
-                selectedNumbersList.appendChild(listItem);
-                saveSelectedNumber(number, name, phone);
-                addParticipantToWheel(name);
-            };
-
-            const saveSelectedNumber = (number, name, phone) => {
-                const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
-                if (!savedNumbers.some(entry => entry.number === number)) {
-                    savedNumbers.push({ number, name, phone });
-                    localStorage.setItem('selectedNumbers', JSON.stringify(savedNumbers));
-                }
-            };
-
-            const removeSelectedNumber = (number, listItem) => {
-                let savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
-                savedNumbers = savedNumbers.filter(entry => entry.number !== number);
-                localStorage.setItem('selectedNumbers', JSON.stringify(savedNumbers));
-                listItem.remove();
-                enableNumber(number);
-                removeParticipantFromWheel(number);
-            };
-
-            const disableNumber = (number) => {
-                const numberDiv = Array.from(document.getElementsByClassName('number')).find(div => div.textContent == number);
-                if (numberDiv) {
-                    numberDiv.classList.add('disabled');
-                    numberDiv.onclick = null;
-                }
-            };
-
-            const enableNumber = (number) => {
-                const numberDiv = Array.from(document.getElementsByClassName('number')).find(div => div.textContent == number);
-                if (numberDiv) {
-                    numberDiv.classList.remove('disabled');
-                    numberDiv.onclick = () => handleNumberClick(numberDiv, number);
-                }
-            };
-
-            const resetRaffle = () => {
-                localStorage.removeItem('selectedNumbers');
-                localStorage.removeItem('selectedNumber');
-                localStorage.removeItem('userName');
-                selectedNumbersList.innerHTML = '';
-                document.querySelectorAll('.number').forEach(el => {
-                    el.classList.remove('selected', 'disabled');
-                    el.onclick = () => handleNumberClick(el, el.textContent);
-                });
-                raffleForm.style.display = 'none';
-                selectedNumberP.textContent = '';
-                nameInput.value = '';
-                phoneInput.value = '';
-                wheel.innerHTML = '';
-            };
-
-            const addParticipantToWheel = (name) => {
-                const participantDiv = document.createElement('div');
-                participantDiv.className = 'participant';
-                participantDiv.textContent = name;
-                const angle = (360 / selectedNumbersList.childElementCount);
-                participantDiv.style.transform = `rotate(${angle}deg) translate(100%)`;
-                wheel.appendChild(participantDiv);
-            };
-
-            const removeParticipantFromWheel = (number) => {
-                const participantDiv = Array.from(wheel.getElementsByClassName('participant')).find(div => div.textContent.includes(number));
-                if (participantDiv) {
-                    participantDiv.remove();
-                }
-            };
-
-            const updateTimer = () => {
-                const now = new Date().getTime();
-                const distance = countdownDate - now;
-                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                timer.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-
-                if (distance < 0) {
-                    clearInterval(timerInterval);
-                    timer.textContent = "Tiempo terminado";
-                    runRaffle();
-                }
-            };
-
-            const runRaffle = () => {
-                const savedNumbers = JSON.parse(localStorage.getItem('selectedNumbers')) || [];
-                if (savedNumbers.length > 0) {
-                    const winner = savedNumbers[Math.floor(Math.random() * savedNumbers.length)];
-                    alert(`El ganador es: ${winner.name} con el número ${winner.number}`);
-                    sendWhatsAppMessage(winner.phone, `¡Felicidades ${winner.name}! Has ganado la rifa con el número ${winner.number}.`);
-                } else {
-                    alert('No hay participantes.');
-                }
-            };
-
-            const sendWhatsAppMessage = (phone, message) => {
-                const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
-                window.open(url, '_blank');
-            };
-
-            for (let i = 1; i <= 100; i++) {
-                const numberDiv = document.createElement('div');
-                numberDiv.textContent = i;
-                numberDiv.className = 'number';
-                numberDiv.onclick = () => handleNumberClick(numberDiv, i);
-                numbersDiv.appendChild(numberDiv);
-            }
-
-            raffleForm.onsubmit = (event) => {
-                event.preventDefault();
-                const name = nameInput.value;
-                const phone = phoneInput.value;
-                const selectedNumber = localStorage.getItem('selectedNumber');
-                if (name && phone && selectedNumber) {
-                    alert(`Número, nombre y teléfono guardados correctamente. Enlace para enviar dinero: https://example.com/payment?number=${selectedNumber}&name=${name}&phone=${phone}`);
-                    addSelectedNumberToList(selectedNumber, name, phone);
-                    disableNumber(selectedNumber);
-                }
-            };
-
-            resetButton.onclick = resetRaffle;
-
-            loadSavedData();
-            const timerInterval = setInterval(updateTimer, 1000);
-        });
+        setInterval(createBubble, 600); // Crea burbujas cada 0.6 segundos
     </script>
 </body>
 </html>
