@@ -3,63 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Burbujas de Amor</title>
+    <title>Brade - Te Amo Ita</title>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js"></script> <!-- Partículas -->
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap'); /* Fuente romántica */
+
+        /* Estilos generales */
         body {
-            background-color: #ffe6f2;
-            overflow: hidden;
             margin: 0;
+            padding: 0;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: #FFB6C1; /* Fondo rosa claro */
+            overflow: hidden;
+            font-family: 'Orbitron', sans-serif;
+            color: #DC143C; /* Rojo carmesí */
             position: relative;
-            font-family: Arial, sans-serif;
         }
+
+        /* Estilos para las burbujas */
         .bubble {
             position: absolute;
             bottom: -50px;
-            width: 100px;
-            height: 100px;
-            background-color: rgba(255, 105, 180, 0.7);
             border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-            text-align: center;
-            box-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
-            animation: float 7s linear infinite, bounce 1s infinite alternate;
+            background-color: rgba(255, 160, 122, 0.5); /* Burbuja de color salmón */
+            animation: float 7s infinite;
         }
+
         @keyframes float {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-110vh); opacity: 0; }
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) scale(0.5);
+                opacity: 0;
+            }
         }
-        @keyframes bounce {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(15px); }
+
+        .bubble:hover {
+            transform: scale(1.5);
+            transition: 0.3s;
+        }
+
+        /* Estilos para el texto animado */
+        .love-text {
+            position: absolute;
+            font-size: 50px;
+            font-family: 'Dancing Script', cursive;
+            color: #DC143C;
+            text-shadow: 0 0 10px #DC143C, 0 0 20px #DC143C, 0 0 40px #DC143C;
+            animation: fadeInOut 3s infinite alternate;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(1); }
+        }
+
+        /* Estilo para el título */
+        .futuristic-text {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 80px;
+            font-weight: bold;
+            font-family: 'Dancing Script', cursive;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px #DC143C, 0 0 20px #DC143C, 0 0 40px #DC143C;
+            animation: glow 1.5s infinite alternate;
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 5px #DC143C, 0 0 10px #DC143C, 0 0 20px #DC143C; }
+            100% { text-shadow: 0 0 10px #DC143C, 0 0 20px #DC143C, 0 0 40px #DC143C; }
         }
     </style>
 </head>
 <body>
+    <!-- Texto futurista romántico -->
+    <div class="futuristic-text">Brade</div>
+
+    <!-- Partículas -->
+    <div id="particles-js" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+
+    <!-- Script para generar burbujas dinámicamente -->
     <script>
-        function createBubble() {
-            const bubble = document.createElement("div");
-            bubble.classList.add("bubble");
-            bubble.textContent = "Te amo, hasta la eternidad 💖";
-            document.body.appendChild(bubble);
+        function createBubbles(amount) {
+            for (let i = 0; i < amount; i++) {
+                let bubble = document.createElement("div");
+                bubble.classList.add("bubble");
 
-            let leftPosition = Math.random() * window.innerWidth;
-            bubble.style.left = `${leftPosition}px`;
+                let size = Math.random() * 35 + 10;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
 
-            setTimeout(() => {
-                bubble.remove();
-            }, 7000); // La burbuja desaparece después de 7s para liberar memoria
+                bubble.style.left = `${Math.random() * 100}vw`;
+
+                bubble.style.animationDuration = `${Math.random() * 4 + 5}s`;
+                bubble.style.animationDelay = `${Math.random() * 3}s`;
+
+                document.body.appendChild(bubble);
+
+                bubble.addEventListener("animationend", () => {
+                    bubble.remove();
+                });
+            }
         }
 
-        setInterval(createBubble, 600); // Crea burbujas cada 0.6 segundos
+        setInterval(() => createBubbles(3), 5000);
+
+        // Partículas
+        particlesJS("particles-js", {
+            particles: {
+                number: { value: 100, density: { enable: true, value_area: 800 } },
+                color: { value: "#DC143C" },
+                shape: { type: "circle" },
+                opacity: { value: 0.5, random: true },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: "#DC143C", opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 2 }
+            },
+            interactivity: {
+                events: {
+                    onhover: { enable: true, mode: "repulse" },
+                    onclick: { enable: true, mode: "push" }
+                }
+            },
+            retina_detect: true
+        });
+
+        // Función para generar textos animados
+        function createLoveText() {
+            const phrases = ["Te", "amo", "ita"];
+            phrases.forEach((phrase, index) => {
+                let textElement = document.createElement("div");
+                textElement.classList.add("love-text");
+                textElement.textContent = phrase;
+
+                textElement.style.top = `${Math.random() * 80 + 10}vh`;
+                textElement.style.left = `${Math.random() * 80 + 10}vw`;
+                textElement.style.animationDelay = `${index * 1.5}s`;
+
+                document.body.appendChild(textElement);
+            });
+        }
+
+        setInterval(createLoveText, 3000); // Genera los textos cada 3 segundos
     </script>
 </body>
 </html>
