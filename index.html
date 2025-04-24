@@ -3,156 +3,440 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brade - Te Amo Ita</title>
-    <script src="https://cdn.jsdelivr.net/npm/particles.js"></script> <!-- Partículas -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap'); /* Fuente romántica */
-
-        /* Estilos generales */
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            background: #FFB6C1; /* Fondo rosa claro */
-            overflow: hidden;
-            font-family: 'Orbitron', sans-serif;
-            color: #DC143C; /* Rojo carmesí */
-            position: relative;
-        }
-
-        /* Estilos para las burbujas */
-        .bubble {
-            position: absolute;
-            bottom: -50px;
-            border-radius: 50%;
-            background-color: rgba(255, 160, 122, 0.5); /* Burbuja de color salmón */
-            animation: float 7s infinite;
-        }
-
-        @keyframes float {
-            0% {
-                transform: translateY(0) scale(1);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100vh) scale(0.5);
-                opacity: 0;
-            }
-        }
-
-        .bubble:hover {
-            transform: scale(1.5);
-            transition: 0.3s;
-        }
-
-        /* Estilos para el texto animado */
-        .love-text {
-            position: absolute;
-            font-size: 50px;
-            font-family: 'Dancing Script', cursive;
-            color: #DC143C;
-            text-shadow: 0 0 10px #DC143C, 0 0 20px #DC143C, 0 0 40px #DC143C;
-            animation: fadeInOut 3s infinite alternate;
-        }
-
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
-            100% { opacity: 0; transform: scale(1); }
-        }
-
-        /* Estilo para el título */
-        .futuristic-text {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 80px;
-            font-weight: bold;
-            font-family: 'Dancing Script', cursive;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            text-shadow: 0 0 10px #DC143C, 0 0 20px #DC143C, 0 0 40px #DC143C;
-            animation: glow 1.5s infinite alternate;
-        }
-
-        @keyframes glow {
-            0% { text-shadow: 0 0 5px #DC143C, 0 0 10px #DC143C, 0 0 20px #DC143C; }
-            100% { text-shadow: 0 0 10px #DC143C, 0 0 20px #DC143C, 0 0 40px #DC143C; }
-        }
-    </style>
+    <title>Administrador Microempresa</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Texto futurista romántico -->
-    <div class="futuristic-text">Brade</div>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-store"></i>
+                <span>Mi Negocio</span>
+            </div>
+        </div>
+    </header>
 
-    <!-- Partículas -->
-    <div id="particles-js" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" data-tab="clientes">
+                <i class="fas fa-users"></i> Clientes
+            </div>
+            <div class="tab" data-tab="almacen">
+                <i class="fas fa-warehouse"></i> Almacén
+            </div>
+            <div class="tab" data-tab="logistica">
+                <i class="fas fa-truck"></i> Logística
+            </div>
+            <div class="tab" data-tab="inversion">
+                <i class="fas fa-chart-pie"></i> Inversión
+            </div>
+        </div>
 
-    <!-- Script para generar burbujas dinámicamente -->
-    <script>
-        function createBubbles(amount) {
-            for (let i = 0; i < amount; i++) {
-                let bubble = document.createElement("div");
-                bubble.classList.add("bubble");
+        <!-- Pestaña Clientes -->
+        <div id="clientes" class="tab-content active">
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-user-plus"></i> Registrar Nuevo Cliente
+                </h2>
+                <form id="clienteForm">
+                    <input type="hidden" id="clienteId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nombre">Nombre*</label>
+                            <input type="text" id="nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="apellido1">Primer Apellido*</label>
+                            <input type="text" id="apellido1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="apellido2">Segundo Apellido</label>
+                            <input type="text" id="apellido2">
+                        </div>
+                        <div class="form-group">
+                            <label for="whatsapp">WhatsApp*</label>
+                            <div style="display: flex;">
+                                <span style="padding: 10px; background: #eee; border: 1px solid #ddd; border-right: none; border-radius: 6px 0 0 6px;">+506</span>
+                                <input type="tel" id="whatsapp" style="border-radius: 0 6px 6px 0;" required>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btnGuardarCliente">
+                        <i class="fas fa-save"></i> Guardar Cliente
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btnCancelarEdicion" style="display: none;">
+                        <i class="fas fa-times"></i> Cancelar Edición
+                    </button>
+                </form>
+            </div>
 
-                let size = Math.random() * 35 + 10;
-                bubble.style.width = `${size}px`;
-                bubble.style.height = `${size}px`;
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-list"></i> Listado de Clientes
+                </h2>
+                <input type="text" id="busquedaClientes" placeholder="Buscar clientes..." class="form-control">
+                <div class="table-responsive">
+                    <table id="tablaClientes">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>WhatsApp</th>
+                                <th>Fecha Registro</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaClientes"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-                bubble.style.left = `${Math.random() * 100}vw`;
+        <!-- Pestaña Almacén -->
+        <div id="almacen" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-box-open"></i> Agregar Producto
+                </h2>
+                <form id="productoForm">
+                    <input type="hidden" id="productoId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nombreProducto">Nombre del Producto*</label>
+                            <input type="text" id="nombreProducto" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="imagenProducto">Imagen* (Solo PNG)</label>
+                            <div class="file-upload-container">
+                                <label class="file-upload-btn">
+                                    <i class="fas fa-image"></i> Seleccionar imagen (PNG)
+                                    <input type="file" id="imagenProducto" accept="image/png" style="display: none;">
+                                </label>
+                            </div>
+                            <div id="imagePreview" style="margin-top: 10px;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="precioBase">Precio Base (CRC)*</label>
+                            <input type="number" id="precioBase" step="1" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ganancia">Ganancia (CRC)</label>
+                            <input type="number" id="ganancia" value="30" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="categoriaProducto">Categoría</label>
+                            <select id="categoriaProducto">
+                                <option value="general">General</option>
+                                <option value="electronica">Electrónica</option>
+                                <option value="ropa">Ropa</option>
+                                <option value="alimentos">Alimentos</option>
+                                <option value="hogar">Hogar</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success" id="btnGuardarProducto">
+                        <i class="fas fa-plus-circle"></i> Agregar Producto
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btnCancelarEdicionProducto" style="display: none;">
+                        <i class="fas fa-times"></i> Cancelar Edición
+                    </button>
+                </form>
+            </div>
 
-                bubble.style.animationDuration = `${Math.random() * 4 + 5}s`;
-                bubble.style.animationDelay = `${Math.random() * 3}s`;
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-boxes"></i> Inventario
+                </h2>
+                <input type="text" id="busquedaProductos" placeholder="Buscar productos..." class="form-control">
+                <div class="table-responsive">
+                    <table id="tablaProductos">
+                        <thead>
+                            <tr>
+                                <th>Imagen</th>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Precio Base (CRC)</th>
+                                <th>IVA (13%)</th>
+                                <th>Ganancia (CRC)</th>
+                                <th>Precio Final (CRC)</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaProductos"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-                document.body.appendChild(bubble);
+        <!-- Pestaña Logística -->
+        <div id="logistica" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-line"></i> Análisis de Ventas
+                </h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="periodoAnalisis">Período de Análisis</label>
+                        <select id="periodoAnalisis">
+                            <option value="7">Últimos 7 días</option>
+                            <option value="30" selected>Últimos 30 días</option>
+                            <option value="90">Últimos 3 meses</option>
+                            <option value="365">Último año</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="categoriaAnalisis">Filtrar por categoría</label>
+                        <select id="categoriaAnalisis">
+                            <option value="todas">Todas las categorías</option>
+                            <option value="general">General</option>
+                            <option value="electronica">Electrónica</option>
+                            <option value="ropa">Ropa</option>
+                            <option value="alimentos">Alimentos</option>
+                            <option value="hogar">Hogar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="graficoVentas"></canvas>
+                </div>
+            </div>
 
-                bubble.addEventListener("animationend", () => {
-                    bubble.remove();
-                });
-            }
-        }
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-calendar-alt"></i> Temporadas de Productos
+                </h2>
+                <div class="table-responsive">
+                    <table id="tablaTemporadas">
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Temporada Alta</th>
+                                <th>Ventas Esperadas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaTemporadas"></tbody>
+                    </table>
+                </div>
+            </div>
 
-        setInterval(() => createBubbles(3), 5000);
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-star"></i> Productos Más Vendidos
+                </h2>
+                <div class="table-responsive">
+                    <table id="tablaTopProductos">
+                        <thead>
+                            <tr>
+                                <th>Posición</th>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Ventas</th>
+                                <th>Ingresos (CRC)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaTopProductos"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-        // Partículas
-        particlesJS("particles-js", {
-            particles: {
-                number: { value: 100, density: { enable: true, value_area: 800 } },
-                color: { value: "#DC143C" },
-                shape: { type: "circle" },
-                opacity: { value: 0.5, random: true },
-                size: { value: 3, random: true },
-                line_linked: { enable: true, distance: 150, color: "#DC143C", opacity: 0.4, width: 1 },
-                move: { enable: true, speed: 2 }
-            },
-            interactivity: {
-                events: {
-                    onhover: { enable: true, mode: "repulse" },
-                    onclick: { enable: true, mode: "push" }
-                }
-            },
-            retina_detect: true
-        });
+        <!-- Pestaña Inversión -->
+        <div id="inversion" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-money-bill-wave"></i> Gestión de Inversión
+                </h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="montoInversion">Monto Invertido (CRC)</label>
+                        <input type="number" id="montoInversion" step="1" min="0" placeholder="Ej: 11550">
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaInversion">Fecha de Inversión</label>
+                        <input type="date" id="fechaInversion">
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcionInversion">Descripción</label>
+                        <input type="text" id="descripcionInversion" placeholder="Ej: Compra de mercadería">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary" id="btnGuardarInversion">
+                    <i class="fas fa-save"></i> Guardar Inversión
+                </button>
+                
+                <div class="inversion-info" style="margin-top: 20px;">
+                    <h3><i class="fas fa-chart-line"></i> Resumen de Inversión</h3>
+                    <div class="info-grid">
+                        <div>
+                            <p><strong>Total Invertido:</strong></p>
+                            <p id="totalInvertido">CRC 0</p>
+                        </div>
+                        <div>
+                            <p><strong>Ganancia por Ventas:</strong></p>
+                            <p id="gananciaVentas">CRC 0</p>
+                        </div>
+                        <div>
+                            <p><strong>Capital Disponible:</strong></p>
+                            <p id="capitalDisponible">CRC 0</p>
+                        </div>
+                        <div>
+                            <p><strong>Ganancia Total:</strong></p>
+                            <p id="gananciaTotal">CRC 0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Función para generar textos animados
-        function createLoveText() {
-            const phrases = ["Te", "amo", "ita"];
-            phrases.forEach((phrase, index) => {
-                let textElement = document.createElement("div");
-                textElement.classList.add("love-text");
-                textElement.textContent = phrase;
+    <!-- Modal Factura -->
+    <div id="modalFactura" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="btnCerrarModalFactura">&times;</span>
+            <div id="facturaContenido" class="factura-container"></div>
+            <div class="action-buttons">
+                <button class="btn btn-warning" id="btnDescargarJPG">
+                    <i class="fas fa-image"></i> Descargar JPG
+                </button>
+                <button class="btn btn-success" id="btnEnviarWhatsApp">
+                    <i class="fab fa-whatsapp"></i> Enviar por WhatsApp
+                </button>
+                <button class="btn btn-info" id="btnGenerarCotizacion">
+                    <i class="fas fa-file-invoice-dollar"></i> Generar Cotización
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" id="btnMetodosPago" data-toggle="dropdown">
+                        <i class="fas fa-credit-card"></i> Métodos de Pago
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="btnMetodosPago">
+                        <a class="dropdown-item" href="#" onclick="seleccionarMetodoPago('contado')">Contado</a>
+                        <a class="dropdown-item" href="#" onclick="seleccionarMetodoPago('50-50')">50/50</a>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" id="btnCerrarModal">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
 
-                textElement.style.top = `${Math.random() * 80 + 10}vh`;
-                textElement.style.left = `${Math.random() * 80 + 10}vw`;
-                textElement.style.animationDelay = `${index * 1.5}s`;
+    <!-- Modal Editar Temporada -->
+    <div id="modalTemporada" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="btnCerrarModalTemporada">&times;</span>
+            <h2 class="card-title">
+                <i class="fas fa-calendar-edit"></i> Editar Temporada
+            </h2>
+            <form id="temporadaForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="editCategoria">Categoría</label>
+                        <input type="text" id="editCategoria" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="editMesInicio">Mes de Inicio</label>
+                        <select id="editMesInicio">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editMesFin">Mes de Fin</label>
+                        <select id="editMesFin">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editVentasEsperadas">% Ventas Esperadas</label>
+                        <input type="number" id="editVentasEsperadas" min="0" max="500" step="5">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary" id="btnGuardarTemporada">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+                <button type="button" class="btn btn-secondary" id="btnCancelarTemporada">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </form>
+        </div>
+    </div>
 
-                document.body.appendChild(textElement);
-            });
-        }
+    <!-- Modal Productos Cliente -->
+    <div id="modalProductosCliente" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="btnCerrarModalProductos">&times;</span>
+            <h2 class="card-title">
+                <i class="fas fa-cart-plus"></i> Productos del Cliente
+            </h2>
+            <div id="noProductosMessage" class="no-products-message" style="display: none;">
+                <i class="fas fa-info-circle"></i> Agrega los productos a este cliente
+            </div>
+            <div class="form-group">
+                <label for="buscarProductoCliente">Buscar Producto</label>
+                <input type="text" id="buscarProductoCliente" class="form-control" placeholder="Buscar productos...">
+            </div>
+            <div class="table-responsive">
+                <table id="tablaProductosCliente">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Producto</th>
+                            <th>Precio (CRC)</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTablaProductosCliente"></tbody>
+                </table>
+            </div>
+            <div class="action-buttons" style="margin-top: 20px;">
+                <button class="btn btn-primary" id="btnGuardarProductosCliente">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+                <button class="btn btn-success" id="btnMarcarVendido">
+                    <i class="fas fa-check-circle"></i> Marcar como Vendido
+                </button>
+            </div>
+        </div>
+    </div>
 
-        setInterval(createLoveText, 3000); // Genera los textos cada 3 segundos
-    </script>
+    <!-- Modal Imagen Ampliada -->
+    <div id="modalImagen" class="modal">
+        <div class="modal-content" style="max-width: 90%; max-height: 90%; text-align: center; background: transparent;">
+            <span class="close-modal" id="btnCerrarModalImagen" style="color: white; font-size: 40px; text-shadow: 0 0 5px #000;">&times;</span>
+            <img id="imagenAmpliada" src="" style="max-width: 100%; max-height: 80vh; border-radius: 8px;">
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
