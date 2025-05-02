@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recortar Imágenes a Círculo - Tamaño Grande</title>
+    <title>Recortar Imágenes a Círculo - Vista Precisa</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
@@ -121,28 +121,19 @@
             border: 1px solid #ccc;
             font-size: 16px;
         }
-        .size-option {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-        }
-        .size-option input {
-            margin-right: 10px;
-        }
     </style>
 </head>
 <body>
-    <h1>Recortar Imágenes a Círculo - Tamaño Grande</h1>
+    <h1>Recortar Imágenes a Círculo - Vista Precisa</h1>
     
     <div class="instructions">
         <h3>Instrucciones:</h3>
         <ol>
             <li>Selecciona múltiples imágenes haciendo clic en "Elegir Imágenes"</li>
-            <li>Elige el tamaño de salida (hasta 4000x4000 píxeles)</li>
-            <li>Cada imagen se mostrará con un recorte circular previo</li>
-            <li>Puedes arrastrar cada imagen para ajustar el recorte</li>
-            <li>Haz clic en "Descargar esta imagen" para guardar individualmente</li>
-            <li>Haz clic en "Descargar todas" para obtener un ZIP con todas las imágenes</li>
+            <li>Ajusta el recorte arrastrando la imagen y usando la rueda del mouse para zoom</li>
+            <li>La imagen descargada tendrá EXACTAMENTE el mismo recorte que ves en la vista previa</li>
+            <li>Elige el tamaño de salida (la relación de recorte se mantendrá igual)</li>
+            <li>Descarga individualmente o todas en un ZIP</li>
         </ol>
     </div>
     
@@ -155,27 +146,19 @@
         <div class="controls">
             <div>
                 <h3>Tamaño de salida:</h3>
-                <div class="size-option">
-                    <input type="radio" id="size1200" name="outputSize" value="1200" checked>
-                    <label for="size1200">1200x1200 píxeles</label>
-                </div>
-                <div class="size-option">
-                    <input type="radio" id="size2000" name="outputSize" value="2000">
-                    <label for="size2000">2000x2000 píxeles</label>
-                </div>
-                <div class="size-option">
-                    <input type="radio" id="size3000" name="outputSize" value="3000">
-                    <label for="size3000">3000x3000 píxeles</label>
-                </div>
-                <div class="size-option">
-                    <input type="radio" id="size4000" name="outputSize" value="4000">
-                    <label for="size4000">4000x4000 píxeles (máxima calidad)</label>
-                </div>
+                <select id="sizeSelector" class="size-selector">
+                    <option value="500">500x500 px (pequeño)</option>
+                    <option value="1000">1000x1000 px (medio)</option>
+                    <option value="1500" selected>1500x1500 px (grande)</option>
+                    <option value="2000">2000x2000 px (muy grande)</option>
+                    <option value="3000">3000x3000 px (extra grande)</option>
+                    <option value="4000">4000x4000 px (máxima calidad)</option>
+                </select>
             </div>
             
             <div>
                 <button id="downloadAllBtn" disabled>Descargar todas (ZIP)</button>
-                <button id="downloadHighResBtn" disabled>Descargar en máxima resolución</button>
+                <button id="downloadVisibleBtn" disabled>Descargar tal como se ve</button>
             </div>
         </div>
         
@@ -186,33 +169,24 @@
     
     <div class="preview-container" id="previewContainer"></div>
     
-    <canvas id="canvasOutput"></canvas>
-    
     <script>
         // Elementos del DOM
         const imageUpload = document.getElementById('imageUpload');
         const previewContainer = document.getElementById('previewContainer');
         const downloadAllBtn = document.getElementById('downloadAllBtn');
-        const downloadHighResBtn = document.getElementById('downloadHighResBtn');
-        const canvasOutput = document.getElementById('canvasOutput');
+        const downloadVisibleBtn = document.getElementById('downloadVisibleBtn');
+        const sizeSelector = document.getElementById('sizeSelector');
         const progressContainer = document.getElementById('progressContainer');
         const progressBar = document.getElementById('progressBar');
-        const sizeOptions = document.querySelectorAll('input[name="outputSize"]');
         
         // Variables de estado
         let images = [];
-        let outputSize = 1200;
+        const PREVIEW_SIZE = 200; // Tamaño fijo de la vista previa
         
         // Event listeners
         imageUpload.addEventListener('change', handleImageUpload);
-        downloadAllBtn.addEventListener('click', () => downloadAllImages(false));
-        downloadHighResBtn.addEventListener('click', () => downloadAllImages(true));
-        
-        sizeOptions.forEach(option => {
-            option.addEventListener('change', function() {
-                outputSize = parseInt(this.value);
-            });
-        });
+        downloadAllBtn.addEventListener('click', downloadAllImages);
+        downloadVisibleBtn.addEventListener('click', downloadVisibleQuality);
         
         // Manejar la subida de imágenes
         function handleImageUpload(e) {
@@ -234,15 +208,14 @@
                             offsetY: 0,
                             scale: 1,
                             id: Date.now() + index,
-                            originalWidth: img.width,
-                            originalHeight: img.height
+                            previewCanvas: createPreviewCanvas(img)
                         };
                         images.push(imageData);
-                        createPreview(imageData);
+                        createPreviewElement(imageData);
                         
                         if (images.length === files.length) {
                             downloadAllBtn.disabled = false;
-                            downloadHighResBtn.disabled = false;
+                            downloadVisibleBtn.disabled = false;
                         }
                     };
                     img.src = event.target.result;
@@ -251,8 +224,24 @@
             });
         }
         
-        // Crear vista previa para una imagen
-        function createPreview(imageData) {
+        // Crear canvas de vista previa
+        function createPreviewCanvas(img) {
+            const canvas = document.createElement('canvas');
+            canvas.width = PREVIEW_SIZE;
+            canvas.height = PREVIEW_SIZE;
+            const ctx = canvas.getContext('2d');
+            
+            // Dibujar máscara circular
+            ctx.beginPath();
+            ctx.arc(PREVIEW_SIZE/2, PREVIEW_SIZE/2, PREVIEW_SIZE/2, 0, Math.PI*2);
+            ctx.closePath();
+            ctx.clip();
+            
+            return canvas;
+        }
+        
+        // Crear elemento de vista previa en el DOM
+        function createPreviewElement(imageData) {
             const previewItem = document.createElement('div');
             previewItem.className = 'preview-item';
             previewItem.dataset.id = imageData.id;
@@ -279,40 +268,37 @@
             
             updatePreview(imageData);
             
-            // Eventos para arrastrar imagen
-            img.addEventListener('mousedown', startDrag);
-            img.addEventListener('touchstart', startDrag, { passive: false });
+            // Eventos para interactuar con la imagen
+            setupImageInteractions(imageData, img);
+        }
+        
+        // Configurar interacciones con la imagen
+        function setupImageInteractions(imageData, imgElement) {
+            let isDragging = false;
+            let startX, startY;
             
-            function startDrag(e) {
+            imgElement.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
                 e.preventDefault();
-                const startX = e.clientX || e.touches[0].clientX;
-                const startY = e.clientY || e.touches[0].clientY;
-                const initialOffsetX = imageData.offsetX;
-                const initialOffsetY = imageData.offsetY;
-                
-                function moveHandler(e) {
-                    const currentX = e.clientX || e.touches[0].clientX;
-                    const currentY = e.clientY || e.touches[0].clientY;
-                    imageData.offsetX = initialOffsetX + (currentX - startX);
-                    imageData.offsetY = initialOffsetY + (currentY - startY);
+            });
+            
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    imageData.offsetX += e.clientX - startX;
+                    imageData.offsetY += e.clientY - startY;
+                    startX = e.clientX;
+                    startY = e.clientY;
                     updatePreview(imageData);
                 }
-                
-                function endHandler() {
-                    document.removeEventListener('mousemove', moveHandler);
-                    document.removeEventListener('touchmove', moveHandler);
-                    document.removeEventListener('mouseup', endHandler);
-                    document.removeEventListener('touchend', endHandler);
-                }
-                
-                document.addEventListener('mousemove', moveHandler);
-                document.addEventListener('touchmove', moveHandler, { passive: false });
-                document.addEventListener('mouseup', endHandler);
-                document.addEventListener('touchend', endHandler);
-            }
+            });
             
-            // Zoom con rueda del mouse
-            img.addEventListener('wheel', function(e) {
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            imgElement.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const delta = e.deltaY > 0 ? -0.1 : 0.1;
                 imageData.scale = Math.max(0.1, Math.min(imageData.scale + delta, 3));
@@ -325,26 +311,24 @@
             const previewImg = document.querySelector(`.image-preview[data-id="${imageData.id}"]`);
             if (!previewImg) return;
             
-            const previewSize = 200;
-            const previewCtx = document.createElement('canvas').getContext('2d');
-            previewCtx.canvas.width = previewSize;
-            previewCtx.canvas.height = previewSize;
+            const ctx = imageData.previewCanvas.getContext('2d');
+            ctx.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
             
-            // Crear máscara circular
-            previewCtx.beginPath();
-            previewCtx.arc(previewSize/2, previewSize/2, previewSize/2, 0, Math.PI*2);
-            previewCtx.closePath();
-            previewCtx.clip();
+            // Volver a aplicar el clip (se pierde con clearRect)
+            ctx.beginPath();
+            ctx.arc(PREVIEW_SIZE/2, PREVIEW_SIZE/2, PREVIEW_SIZE/2, 0, Math.PI*2);
+            ctx.closePath();
+            ctx.clip();
             
             // Calcular dimensiones para mantener relación de aspecto
             const imgRatio = imageData.element.width / imageData.element.height;
             let drawWidth, drawHeight;
             
             if (imgRatio > 1) {
-                drawHeight = previewSize;
+                drawHeight = PREVIEW_SIZE;
                 drawWidth = drawHeight * imgRatio;
             } else {
-                drawWidth = previewSize;
+                drawWidth = PREVIEW_SIZE;
                 drawHeight = drawWidth / imgRatio;
             }
             
@@ -352,12 +336,12 @@
             drawWidth *= imageData.scale;
             drawHeight *= imageData.scale;
             
-            const x = (previewSize - drawWidth) / 2 + imageData.offsetX * (imageData.scale / 2);
-            const y = (previewSize - drawHeight) / 2 + imageData.offsetY * (imageData.scale / 2);
+            const x = (PREVIEW_SIZE - drawWidth) / 2 + imageData.offsetX;
+            const y = (PREVIEW_SIZE - drawHeight) / 2 + imageData.offsetY;
             
-            previewCtx.drawImage(imageData.element, x, y, drawWidth, drawHeight);
+            ctx.drawImage(imageData.element, x, y, drawWidth, drawHeight);
             
-            previewImg.src = previewCtx.canvas.toDataURL('image/png', 0.9);
+            previewImg.src = imageData.previewCanvas.toDataURL('image/png', 0.9);
         }
         
         // Descargar una sola imagen
@@ -365,10 +349,10 @@
             const imageData = images.find(img => img.id == id);
             if (!imageData) return;
             
-            const selectedSize = outputSize;
-            processImage(imageData, selectedSize, (dataURL) => {
+            const outputSize = parseInt(sizeSelector.value);
+            processImage(imageData, outputSize, (dataURL) => {
                 const link = document.createElement('a');
-                const filename = imageData.file.name.replace(/\.[^/.]+$/, "") + `_recortada_${selectedSize}x${selectedSize}.png`;
+                const filename = imageData.file.name.replace(/\.[^/.]+$/, "") + `_recortada_${outputSize}x${outputSize}.png`;
                 link.download = filename;
                 link.href = dataURL;
                 link.click();
@@ -376,7 +360,7 @@
         }
         
         // Descargar todas las imágenes en un ZIP
-        function downloadAllImages(highRes) {
+        function downloadAllImages() {
             if (images.length === 0) return;
             
             progressContainer.style.display = 'block';
@@ -386,14 +370,12 @@
             const zip = new JSZip();
             const imgFolder = zip.folder("imagenes_recortadas");
             let processed = 0;
+            const outputSize = parseInt(sizeSelector.value);
             
-            // Usar el tamaño seleccionado o el máximo disponible para alta resolución
-            const sizeToUse = highRes ? getMaxPossibleSize() : outputSize;
-            
-            images.forEach((imageData, index) => {
-                processImage(imageData, sizeToUse, (dataURL) => {
+            images.forEach((imageData) => {
+                processImage(imageData, outputSize, (dataURL) => {
                     const filename = imageData.file.name.replace(/\.[^/.]+$/, "") + 
-                        `_recortada_${sizeToUse}x${sizeToUse}.png`;
+                        `_recortada_${outputSize}x${outputSize}.png`;
                     const base64Data = dataURL.split(',')[1];
                     imgFolder.file(filename, base64Data, { base64: true });
                     
@@ -404,10 +386,7 @@
                     
                     if (processed === images.length) {
                         zip.generateAsync({ type: "blob" }).then(function(content) {
-                            const zipName = highRes 
-                                ? `imagenes_recortadas_maxres_${sizeToUse}x${sizeToUse}.zip`
-                                : "imagenes_recortadas.zip";
-                            saveAs(content, zipName);
+                            saveAs(content, "imagenes_recortadas.zip");
                             progressContainer.style.display = 'none';
                         });
                     }
@@ -415,59 +394,133 @@
             });
         }
         
-        // Obtener el máximo tamaño posible basado en las imágenes originales
-        function getMaxPossibleSize() {
-            let maxSize = 4000;
-            images.forEach(imageData => {
-                const minDimension = Math.min(imageData.originalWidth, imageData.originalHeight);
-                maxSize = Math.min(maxSize, minDimension);
+        // Descargar con la calidad visible (misma relación que la vista previa)
+        function downloadVisibleQuality() {
+            if (images.length === 0) return;
+            
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            
+            const zip = new JSZip();
+            const imgFolder = zip.folder("imagenes_visibles");
+            let processed = 0;
+            const outputSize = parseInt(sizeSelector.value);
+            
+            images.forEach((imageData) => {
+                processVisibleImage(imageData, outputSize, (dataURL) => {
+                    const filename = imageData.file.name.replace(/\.[^/.]+$/, "") + 
+                        `_visible_${outputSize}x${outputSize}.png`;
+                    const base64Data = dataURL.split(',')[1];
+                    imgFolder.file(filename, base64Data, { base64: true });
+                    
+                    processed++;
+                    const progress = Math.round((processed / images.length) * 100);
+                    progressBar.style.width = progress + '%';
+                    progressBar.textContent = progress + '%';
+                    
+                    if (processed === images.length) {
+                        zip.generateAsync({ type: "blob" }).then(function(content) {
+                            saveAs(content, "imagenes_visibles.zip");
+                            progressContainer.style.display = 'none';
+                        });
+                    }
+                });
             });
-            return Math.min(maxSize, 4000); // No más de 4000x4000
         }
         
-        // Procesar imagen a círculo del tamaño especificado
-        function processImage(imageData, size, callback) {
-            // Crear canvas temporal del tamaño deseado
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = size;
-            tempCanvas.height = size;
-            const tempCtx = tempCanvas.getContext('2d');
+        // Procesar imagen con el tamaño seleccionado
+        function processImage(imageData, outputSize, callback) {
+            const canvas = document.createElement('canvas');
+            canvas.width = outputSize;
+            canvas.height = outputSize;
+            const ctx = canvas.getContext('2d');
             
-            // Crear máscara circular
-            tempCtx.beginPath();
-            tempCtx.arc(size/2, size/2, size/2, 0, Math.PI*2);
-            tempCtx.closePath();
-            tempCtx.clip();
+            // Aplicar máscara circular
+            ctx.beginPath();
+            ctx.arc(outputSize/2, outputSize/2, outputSize/2, 0, Math.PI*2);
+            ctx.closePath();
+            ctx.clip();
             
-            // Calcular dimensiones para mantener relación de aspecto
+            // Calcular relación de aspecto
             const imgRatio = imageData.element.width / imageData.element.height;
             let drawWidth, drawHeight;
             
             if (imgRatio > 1) {
-                drawHeight = size;
+                drawHeight = outputSize;
                 drawWidth = drawHeight * imgRatio;
             } else {
-                drawWidth = size;
+                drawWidth = outputSize;
                 drawHeight = drawWidth / imgRatio;
             }
             
-            // Aplicar escala y desplazamiento (ajustados para el tamaño final)
-            const scaleFactor = 200 / size; // Factor de conversión de vista previa a tamaño final
-            const finalScale = imageData.scale / scaleFactor;
-            drawWidth *= finalScale;
-            drawHeight *= finalScale;
+            // Aplicar escala y desplazamiento (proporcional al tamaño de salida)
+            const scaleFactor = outputSize / PREVIEW_SIZE;
+            drawWidth *= imageData.scale * scaleFactor;
+            drawHeight *= imageData.scale * scaleFactor;
             
-            const x = (size - drawWidth) / 2 + imageData.offsetX * (finalScale * 6);
-            const y = (size - drawHeight) / 2 + imageData.offsetY * (finalScale * 6);
+            const x = (outputSize - drawWidth) / 2 + imageData.offsetX * scaleFactor;
+            const y = (outputSize - drawHeight) / 2 + imageData.offsetY * scaleFactor;
             
-            // Dibujar imagen en canvas temporal con alta calidad
-            tempCtx.imageSmoothingEnabled = true;
-            tempCtx.imageSmoothingQuality = 'high';
-            tempCtx.drawImage(imageData.element, x, y, drawWidth, drawHeight);
+            // Dibujar con alta calidad
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(imageData.element, x, y, drawWidth, drawHeight);
             
             // Convertir a PNG con máxima calidad
-            const dataURL = tempCanvas.toDataURL('image/png', 1.0);
-            callback(dataURL);
+            callback(canvas.toDataURL('image/png', 1.0));
+        }
+        
+        // Procesar imagen exactamente como se ve en la vista previa
+        function processVisibleImage(imageData, outputSize, callback) {
+            const canvas = document.createElement('canvas');
+            canvas.width = outputSize;
+            canvas.height = outputSize;
+            const ctx = canvas.getContext('2d');
+            
+            // Aplicar máscara circular
+            ctx.beginPath();
+            ctx.arc(outputSize/2, outputSize/2, outputSize/2, 0, Math.PI*2);
+            ctx.closePath();
+            ctx.clip();
+            
+            // Calcular la relación de escala exacta como en la vista previa
+            const imgRatio = imageData.element.width / imageData.element.height;
+            let drawWidth, drawHeight;
+            
+            if (imgRatio > 1) {
+                drawHeight = PREVIEW_SIZE;
+                drawWidth = drawHeight * imgRatio;
+            } else {
+                drawWidth = PREVIEW_SIZE;
+                drawHeight = drawWidth / imgRatio;
+            }
+            
+            // Aplicar la misma escala y desplazamiento que en la vista previa
+            drawWidth *= imageData.scale;
+            drawHeight *= imageData.scale;
+            
+            const x = (PREVIEW_SIZE - drawWidth) / 2 + imageData.offsetX;
+            const y = (PREVIEW_SIZE - drawHeight) / 2 + imageData.offsetY;
+            
+            // Escalar al tamaño de salida manteniendo la misma relación
+            const scaleFactor = outputSize / PREVIEW_SIZE;
+            const srcX = Math.max(0, x);
+            const srcY = Math.max(0, y);
+            const srcWidth = Math.min(drawWidth, PREVIEW_SIZE - srcX);
+            const srcHeight = Math.min(drawHeight, PREVIEW_SIZE - srcY);
+            
+            // Dibujar la parte visible de la imagen escalada al tamaño de salida
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(
+                imageData.previewCanvas, 
+                srcX, srcY, srcWidth, srcHeight,
+                0, 0, outputSize, outputSize
+            );
+            
+            // Convertir a PNG con máxima calidad
+            callback(canvas.toDataURL('image/png', 1.0));
         }
     </script>
 </body>
