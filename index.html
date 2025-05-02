@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recortar Imagen a Círculo 1200x1200</title>
+    <title>Recortar Múltiples Imágenes a Círculo 1200x1200</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
             text-align: center;
@@ -15,16 +17,41 @@
         .container {
             margin: 20px 0;
         }
-        #imagePreview {
-            width: 300px;
-            height: 300px;
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .image-preview {
+            width: 200px;
+            height: 200px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px dashed #ccc;
-            margin: 20px auto;
-            display: none;
+            cursor: move;
         }
-        #canvasOutput {
+        .preview-item {
+            position: relative;
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+        }
+        .preview-item button {
+            margin-top: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .preview-item .filename {
+            font-size: 12px;
+            margin-top: 5px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        canvas {
             display: none;
         }
         .controls {
@@ -42,6 +69,10 @@
         }
         button:hover {
             background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
         input[type="file"] {
             display: none;
@@ -64,109 +95,183 @@
             margin-bottom: 20px;
             text-align: left;
         }
+        .progress-container {
+            width: 100%;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: none;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 30px;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <h1>Recortar Imagen a Círculo 1200x1200</h1>
+    <h1>Recortar Múltiples Imágenes a Círculo 1200x1200</h1>
     
     <div class="instructions">
         <h3>Instrucciones:</h3>
         <ol>
-            <li>Selecciona una imagen haciendo clic en "Elegir Imagen"</li>
-            <li>La imagen se mostrará con un recorte circular previo</li>
-            <li>Puedes arrastrar la imagen para ajustar el recorte</li>
-            <li>Haz clic en "Descargar Imagen" para guardar el resultado como PNG (1200x1200)</li>
+            <li>Selecciona múltiples imágenes haciendo clic en "Elegir Imágenes"</li>
+            <li>Cada imagen se mostrará con un recorte circular previo</li>
+            <li>Puedes arrastrar cada imagen para ajustar el recorte</li>
+            <li>Haz clic en "Descargar esta imagen" para guardar individualmente</li>
+            <li>Haz clic en "Descargar todas" para obtener un ZIP con todas las imágenes (1200x1200 PNG)</li>
         </ol>
     </div>
     
     <div class="container">
         <label for="imageUpload" class="custom-file-upload">
-            Elegir Imagen
+            Elegir Imágenes
         </label>
-        <input type="file" id="imageUpload" accept="image/*">
+        <input type="file" id="imageUpload" accept="image/*" multiple>
         
         <div class="controls">
-            <button id="downloadBtn" disabled>Descargar Imagen</button>
+            <button id="downloadAllBtn" disabled>Descargar todas (ZIP)</button>
+        </div>
+        
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar">0%</div>
         </div>
     </div>
     
-    <div>
-        <img id="imagePreview" alt="Vista previa">
-    </div>
+    <div class="preview-container" id="previewContainer"></div>
     
     <canvas id="canvasOutput" width="1200" height="1200"></canvas>
     
     <script>
+        // Elementos del DOM
         const imageUpload = document.getElementById('imageUpload');
-        const imagePreview = document.getElementById('imagePreview');
-        const downloadBtn = document.getElementById('downloadBtn');
+        const previewContainer = document.getElementById('previewContainer');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
         const canvasOutput = document.getElementById('canvasOutput');
         const ctx = canvasOutput.getContext('2d');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
         
-        let currentImage = null;
-        let isDragging = false;
-        let startX, startY;
-        let offsetX = 0, offsetY = 0;
-        let scale = 1;
+        // Variables de estado
+        let images = [];
         
-        imageUpload.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
+        // Event listeners
+        imageUpload.addEventListener('change', handleImageUpload);
+        downloadAllBtn.addEventListener('click', downloadAllImages);
+        
+        // Manejar la subida de imágenes
+        function handleImageUpload(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            
+            images = [];
+            previewContainer.innerHTML = '';
+            
+            Array.from(files).forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     const img = new Image();
                     img.onload = function() {
-                        currentImage = img;
-                        resetImagePosition();
-                        updatePreview();
-                        downloadBtn.disabled = false;
+                        const imageData = {
+                            element: img,
+                            file: file,
+                            offsetX: 0,
+                            offsetY: 0,
+                            scale: 1,
+                            id: Date.now() + index
+                        };
+                        images.push(imageData);
+                        createPreview(imageData);
+                        
+                        if (images.length === files.length) {
+                            downloadAllBtn.disabled = false;
+                        }
                     };
                     img.src = event.target.result;
                 };
                 reader.readAsDataURL(file);
-            }
-        });
-        
-        imagePreview.addEventListener('mousedown', function(e) {
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-        });
-        
-        window.addEventListener('mousemove', function(e) {
-            if (isDragging && currentImage) {
-                offsetX += e.clientX - startX;
-                offsetY += e.clientY - startY;
-                startX = e.clientX;
-                startY = e.clientY;
-                updatePreview();
-            }
-        });
-        
-        window.addEventListener('mouseup', function() {
-            isDragging = false;
-        });
-        
-        imagePreview.addEventListener('wheel', function(e) {
-            e.preventDefault();
-            if (currentImage) {
-                const delta = e.deltaY > 0 ? -0.1 : 0.1;
-                scale = Math.max(0.1, Math.min(scale + delta, 3));
-                updatePreview();
-            }
-        }, { passive: false });
-        
-        function resetImagePosition() {
-            offsetX = 0;
-            offsetY = 0;
-            scale = 1;
+            });
         }
         
-        function updatePreview() {
-            if (!currentImage) return;
+        // Crear vista previa para una imagen
+        function createPreview(imageData) {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            previewItem.dataset.id = imageData.id;
             
-            // Actualizar vista previa pequeña
-            const previewSize = 300;
+            const img = document.createElement('img');
+            img.className = 'image-preview';
+            img.dataset.id = imageData.id;
+            img.draggable = false;
+            
+            const filename = document.createElement('div');
+            filename.className = 'filename';
+            filename.textContent = imageData.file.name.length > 20 
+                ? imageData.file.name.substring(0, 17) + '...' 
+                : imageData.file.name;
+            
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = 'Descargar esta imagen';
+            downloadBtn.addEventListener('click', () => downloadSingleImage(imageData.id));
+            
+            previewItem.appendChild(img);
+            previewItem.appendChild(filename);
+            previewItem.appendChild(downloadBtn);
+            previewContainer.appendChild(previewItem);
+            
+            updatePreview(imageData);
+            
+            // Eventos para arrastrar imagen
+            img.addEventListener('mousedown', startDrag);
+            img.addEventListener('touchstart', startDrag, { passive: false });
+            
+            function startDrag(e) {
+                e.preventDefault();
+                const startX = e.clientX || e.touches[0].clientX;
+                const startY = e.clientY || e.touches[0].clientY;
+                const initialOffsetX = imageData.offsetX;
+                const initialOffsetY = imageData.offsetY;
+                
+                function moveHandler(e) {
+                    const currentX = e.clientX || e.touches[0].clientX;
+                    const currentY = e.clientY || e.touches[0].clientY;
+                    imageData.offsetX = initialOffsetX + (currentX - startX);
+                    imageData.offsetY = initialOffsetY + (currentY - startY);
+                    updatePreview(imageData);
+                }
+                
+                function endHandler() {
+                    document.removeEventListener('mousemove', moveHandler);
+                    document.removeEventListener('touchmove', moveHandler);
+                    document.removeEventListener('mouseup', endHandler);
+                    document.removeEventListener('touchend', endHandler);
+                }
+                
+                document.addEventListener('mousemove', moveHandler);
+                document.addEventListener('touchmove', moveHandler, { passive: false });
+                document.addEventListener('mouseup', endHandler);
+                document.addEventListener('touchend', endHandler);
+            }
+            
+            // Zoom con rueda del mouse
+            img.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                imageData.scale = Math.max(0.1, Math.min(imageData.scale + delta, 3));
+                updatePreview(imageData);
+            }, { passive: false });
+        }
+        
+        // Actualizar vista previa
+        function updatePreview(imageData) {
+            const previewImg = document.querySelector(`.image-preview[data-id="${imageData.id}"]`);
+            if (!previewImg) return;
+            
+            const previewSize = 200;
             const previewCtx = document.createElement('canvas').getContext('2d');
             previewCtx.canvas.width = previewSize;
             previewCtx.canvas.height = previewSize;
@@ -178,7 +283,7 @@
             previewCtx.clip();
             
             // Calcular dimensiones para mantener relación de aspecto
-            const imgRatio = currentImage.width / currentImage.height;
+            const imgRatio = imageData.element.width / imageData.element.height;
             let drawWidth, drawHeight;
             
             if (imgRatio > 1) {
@@ -190,21 +295,66 @@
             }
             
             // Aplicar escala y desplazamiento
-            drawWidth *= scale;
-            drawHeight *= scale;
+            drawWidth *= imageData.scale;
+            drawHeight *= imageData.scale;
             
-            const x = (previewSize - drawWidth) / 2 + offsetX * (scale / 2);
-            const y = (previewSize - drawHeight) / 2 + offsetY * (scale / 2);
+            const x = (previewSize - drawWidth) / 2 + imageData.offsetX * (imageData.scale / 2);
+            const y = (previewSize - drawHeight) / 2 + imageData.offsetY * (imageData.scale / 2);
             
-            previewCtx.drawImage(currentImage, x, y, drawWidth, drawHeight);
+            previewCtx.drawImage(imageData.element, x, y, drawWidth, drawHeight);
             
-            imagePreview.src = previewCtx.canvas.toDataURL();
-            imagePreview.style.display = 'block';
+            previewImg.src = previewCtx.canvas.toDataURL('image/png', 0.9);
         }
         
-        downloadBtn.addEventListener('click', function() {
-            if (!currentImage) return;
+        // Descargar una sola imagen
+        function downloadSingleImage(id) {
+            const imageData = images.find(img => img.id == id);
+            if (!imageData) return;
             
+            processImage(imageData, (dataURL) => {
+                const link = document.createElement('a');
+                const filename = imageData.file.name.replace(/\.[^/.]+$/, "") + '_recortada.png';
+                link.download = filename;
+                link.href = dataURL;
+                link.click();
+            });
+        }
+        
+        // Descargar todas las imágenes en un ZIP
+        function downloadAllImages() {
+            if (images.length === 0) return;
+            
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            
+            const zip = new JSZip();
+            const imgFolder = zip.folder("imagenes_recortadas");
+            let processed = 0;
+            
+            images.forEach((imageData, index) => {
+                processImage(imageData, (dataURL) => {
+                    const filename = imageData.file.name.replace(/\.[^/.]+$/, "") + '_recortada.png';
+                    const base64Data = dataURL.split(',')[1];
+                    imgFolder.file(filename, base64Data, { base64: true });
+                    
+                    processed++;
+                    const progress = Math.round((processed / images.length) * 100);
+                    progressBar.style.width = progress + '%';
+                    progressBar.textContent = progress + '%';
+                    
+                    if (processed === images.length) {
+                        zip.generateAsync({ type: "blob" }).then(function(content) {
+                            saveAs(content, "imagenes_recortadas.zip");
+                            progressContainer.style.display = 'none';
+                        });
+                    }
+                });
+            });
+        }
+        
+        // Procesar imagen a círculo 1200x1200
+        function processImage(imageData, callback) {
             // Limpiar canvas
             ctx.clearRect(0, 0, 1200, 1200);
             
@@ -215,7 +365,7 @@
             ctx.clip();
             
             // Calcular dimensiones para mantener relación de aspecto
-            const imgRatio = currentImage.width / currentImage.height;
+            const imgRatio = imageData.element.width / imageData.element.height;
             let drawWidth, drawHeight;
             
             if (imgRatio > 1) {
@@ -227,22 +377,22 @@
             }
             
             // Aplicar escala y desplazamiento (ajustados para el tamaño final)
-            const finalScale = scale * (300 / 1200); // Ajustar escala de vista previa a tamaño final
+            const finalScale = imageData.scale * (200 / 1200); // Ajustar escala de vista previa a tamaño final
             drawWidth *= finalScale;
             drawHeight *= finalScale;
             
-            const x = (1200 - drawWidth) / 2 + offsetX * (finalScale * 4);
-            const y = (1200 - drawHeight) / 2 + offsetY * (finalScale * 4);
+            const x = (1200 - drawWidth) / 2 + imageData.offsetX * (finalScale * 6);
+            const y = (1200 - drawHeight) / 2 + imageData.offsetY * (finalScale * 6);
             
-            // Dibujar imagen en canvas de 1200x1200
-            ctx.drawImage(currentImage, x, y, drawWidth, drawHeight);
+            // Dibujar imagen en canvas de 1200x1200 con alta calidad
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(imageData.element, x, y, drawWidth, drawHeight);
             
-            // Crear enlace de descarga
-            const link = document.createElement('a');
-            link.download = 'imagen-recortada.png';
-            link.href = canvasOutput.toDataURL('image/png');
-            link.click();
-        });
+            // Convertir a PNG con alta calidad
+            const dataURL = canvasOutput.toDataURL('image/png', 1.0);
+            callback(dataURL);
+        }
     </script>
 </body>
 </html>
