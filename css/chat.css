@@ -1,0 +1,119 @@
+.chat-container { width: 100%; height: 100%; display: flex; flex-direction: column; }
+.chat-messages {
+  flex: 1; overflow-y: auto;
+  padding: 20px 16px 100px;
+  display: flex; flex-direction: column; gap: 8px;
+  scroll-behavior: smooth;
+}
+.message {
+  max-width: min(85%, 560px);
+  padding: 10px 16px;
+  border-radius: 20px;
+  line-height: 1.45;
+  word-wrap: break-word;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  animation: fadeIn .2s ease forwards;
+  position: relative;
+}
+.message.sent {
+  align-self: flex-end;
+  border-bottom-right-radius: 6px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), #16a34a);
+}
+.message.received {
+  align-self: flex-start;
+  border-bottom-left-radius: 6px;
+  color: #111;
+  background: #e4e4e7;
+}
+.message-username {
+  font-size: 12px; font-weight: 700; margin-bottom: 4px;
+  opacity: 0.8; display: block;
+}
+.message.sent .message-username { color: rgba(255,255,255,0.9); }
+.message.received .message-username { color: rgba(0,0,0,0.6); }
+.message-text { font-size: 15px; }
+.message-image-container { margin-top: 8px; border-radius: 14px; overflow: hidden; max-width: 100%; }
+.message-image { max-width: 100%; max-height: 400px; display: block; cursor: pointer; }
+.message-audio-container { margin-top: 8px; background: rgba(0,0,0,0.15); border-radius: 12px; padding: 8px; }
+.message-audio { width: 100%; height: 40px; outline: none; }
+
+/* INPUT */
+.input-area {
+  flex-shrink: 0;
+  padding: 8px 16px max(16px, var(--safe-bottom));
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+}
+.input-wrapper {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 6px 6px 6px 12px;
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s, background 0.2s;
+}
+.input-wrapper.recording { border-color: var(--danger); background: rgba(239, 68, 68, 0.05); }
+
+.icon-btn {
+  width: 40px; height: 40px; border: none; background: transparent;
+  color: var(--text-dim); border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s; flex-shrink: 0;
+}
+.icon-btn svg { width: 22px; height: 22px; }
+.icon-btn.active { background: var(--accent); color: #fff; transform: rotate(45deg); }
+
+.cancel-audio-btn {
+  display: none;
+  width: 36px; height: 36px; border: none; background: rgba(239, 68, 68, 0.15);
+  color: var(--danger); border-radius: 50%; cursor: pointer; flex-shrink: 0;
+  align-items: center; justify-content: center;
+}
+.cancel-audio-btn svg { width: 18px; height: 18px; }
+.cancel-audio-btn.visible { display: flex; }
+
+.message-input {
+  flex: 1; background: transparent; border: none;
+  padding: 8px 0; font-size: 16px; color: var(--text); outline: none;
+  min-width: 0;
+}
+.message-input::placeholder { color: var(--text-dim); }
+.message-input:disabled { opacity: 1; color: var(--danger); font-weight: 600; }
+
+.send-btn {
+  width: 40px; height: 40px; border: none; background: var(--accent); color: #fff;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .2s; flex-shrink: 0;
+}
+.send-btn svg { width: 18px; height: 18px; margin-left: -2px; }
+.send-btn:active { transform: scale(0.92); }
+.send-btn.recording { background: var(--danger); animation: pulse-red 1.5s infinite; }
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* MENÚ ADJUNTOS */
+.attach-menu {
+  position: absolute; bottom: calc(100% + 12px); left: 16px;
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 8px;
+  box-shadow: var(--shadow);
+  opacity: 0; transform: translateY(10px) scale(.95);
+  transform-origin: bottom left; pointer-events: none;
+  transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.attach-menu.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.attach-option {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; background: transparent; border: none;
+  border-radius: var(--radius-md); color: var(--text);
+  font-size: 15px; font-weight: 500; cursor: pointer;
+  transition: background .2s;
+}
+.attach-option svg { width: 22px; height: 22px; color: var(--accent); }
+.attach-option:hover { background: rgba(255,255,255,0.06); }
