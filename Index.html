@@ -135,8 +135,6 @@
     @keyframes floatIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
     .notif-float-btn svg { width: 22px; height: 22px; transition: transform 0.2s; }
     .notif-float-btn:active { transform: scale(0.9); }
-
-    /* Estado: sin permiso (pulsa para llamar atención) */
     .notif-float-btn.off {
       color: var(--warn);
       border-color: rgba(245, 158, 11, 0.4);
@@ -146,22 +144,16 @@
       0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 0 0 rgba(245, 158, 11, 0.5); }
       50% { box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 0 10px rgba(245, 158, 11, 0); }
     }
-
-    /* Estado: activado */
     .notif-float-btn.on {
       color: var(--accent);
       border-color: rgba(34, 197, 94, 0.5);
       background: rgba(34, 197, 94, 0.15);
     }
-
-    /* Estado: bloqueado */
     .notif-float-btn.blocked {
       color: var(--danger);
       border-color: rgba(239, 68, 68, 0.4);
       background: rgba(239, 68, 68, 0.12);
     }
-
-    /* Indicador de estado (punto pequeño) */
     .notif-float-btn::after {
       content: '';
       position: absolute;
@@ -623,9 +615,8 @@
       if (e.key === 'Enter') loginBtn.click();
     });
 
-    // ==================== ACTUALIZAR BOTONES DE NOTIFICACIONES ====================
+    // ==================== ACTUALIZAR BOTONES ====================
     function updateNotifButtons() {
-      // --- Botón de login ---
       if (!('Notification' in window)) {
         notifToggleBtn.disabled = true;
         notifToggleBtn.classList.remove('enabled', 'blocked');
@@ -637,7 +628,7 @@
 
       const perm = Notification.permission;
 
-      // --- Botón login ---
+      // Botón login
       if (perm === 'granted') {
         notifToggleBtn.classList.add('enabled');
         notifToggleBtn.classList.remove('blocked');
@@ -651,7 +642,7 @@
         notifToggleLabel.textContent = 'Activar notificaciones';
       }
 
-      // --- Botón flotante ---
+      // Botón flotante
       notifFloatBtn.classList.remove('off', 'on', 'blocked');
       if (perm === 'granted') {
         notifFloatBtn.classList.add('on');
@@ -665,9 +656,8 @@
       }
     }
 
-    // ==================== LÓGICA COMPARTIDA DEL BOTÓN ====================
+    // ==================== CLICK EN BOTONES ====================
     async function handleNotifButtonClick() {
-      // Si ya están concedidas → preguntar si desactivar
       if (Notification.permission === 'granted') {
         const confirmDisable = confirm('¿Desactivar las notificaciones push?\n\nDejarás de recibir avisos de nuevos mensajes.');
         if (!confirmDisable) return;
@@ -675,12 +665,9 @@
         try {
           if (!messaging) messaging = firebase.messaging();
           const currentToken = await messaging.getToken({ vapidKey: VAPID_KEY });
-
           if (currentToken) {
             await messaging.deleteToken();
-            if (user && user.id) {
-              await tokensRef.child(user.id).remove();
-            }
+            if (user && user.id) await tokensRef.child(user.id).remove();
             console.log('🔕 Token eliminado');
             alert('Notificaciones desactivadas. Ya no recibirás avisos.');
           }
@@ -693,13 +680,11 @@
         return;
       }
 
-      // Si están bloqueadas → avisar
       if (Notification.permission === 'denied') {
         alert('Las notificaciones están bloqueadas en tu navegador.\n\nDebes habilitarlas manualmente desde la configuración del sitio (icono del candado 🔒 en la barra de direcciones).');
         return;
       }
 
-      // Pedir permiso
       notifToggleBtn.disabled = true;
       notifFloatBtn.disabled = true;
       notifToggleLabel.textContent = 'Solicitando permiso...';
@@ -726,26 +711,19 @@
 
     // ==================== NOTIFICACIONES PUSH ====================
     async function requestNotificationPermission() {
-      if (!('Notification' in window)) {
-        console.warn('Este navegador no soporta notificaciones.');
-        return null;
-      }
+      if (!('Notification' in window)) return null;
 
       if (Notification.permission === 'granted') {
         return await registerFCMToken();
       }
 
-      if (Notification.permission === 'denied') {
-        console.warn('Notificaciones bloqueadas por el usuario.');
-        return null;
-      }
+      if (Notification.permission === 'denied') return null;
 
       try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
           return await registerFCMToken();
         } else {
-          console.log('Permiso de notificaciones denegado.');
           return null;
         }
       } catch (err) {
@@ -766,9 +744,7 @@
           await navigator.serviceWorker.ready;
         }
 
-        if (!messaging) {
-          messaging = firebase.messaging();
-        }
+        if (!messaging) messaging = firebase.messaging();
 
         const token = await messaging.getToken({ vapidKey: VAPID_KEY });
         if (!token) {
