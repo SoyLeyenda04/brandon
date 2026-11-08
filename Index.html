@@ -39,6 +39,7 @@
     }
     body { padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
 
+    /* ==================== PANTALLA LOGIN ==================== */
     .welcome-screen {
       position: fixed; inset: 0; z-index: 5000;
       background: var(--bg);
@@ -86,23 +87,17 @@
     }
     .warning-note svg { width: 16px; height: 16px; flex-shrink: 0; }
 
-    /* === BOTÓN NOTIFICACIONES === */
+    /* ==================== BOTÓN NOTIFICACIONES (LOGIN) ==================== */
     .notif-toggle-btn {
       width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 14px;
-      padding: 12px 16px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 14px; padding: 12px 16px;
       border-radius: var(--radius-md);
       border: 1px solid var(--border);
       background: rgba(255,255,255,0.03);
       color: var(--text-dim);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
     }
     .notif-toggle-btn:active { transform: scale(0.98); }
     .notif-toggle-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
@@ -118,10 +113,73 @@
     }
     .notif-toggle-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+    /* ==================== BOTÓN FLOTANTE NOTIFICACIONES ==================== */
+    .notif-float-btn {
+      position: fixed;
+      top: calc(var(--safe-top) + 16px);
+      right: 16px;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: rgba(28, 28, 31, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--text-dim);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      z-index: 2000;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: floatIn 0.4s ease;
+    }
+    @keyframes floatIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+    .notif-float-btn svg { width: 22px; height: 22px; transition: transform 0.2s; }
+    .notif-float-btn:active { transform: scale(0.9); }
+
+    /* Estado: sin permiso (pulsa para llamar atención) */
+    .notif-float-btn.off {
+      color: var(--warn);
+      border-color: rgba(245, 158, 11, 0.4);
+      animation: floatIn 0.4s ease, bell-pulse 2s infinite 0.6s;
+    }
+    @keyframes bell-pulse {
+      0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 0 0 rgba(245, 158, 11, 0.5); }
+      50% { box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 0 10px rgba(245, 158, 11, 0); }
+    }
+
+    /* Estado: activado */
+    .notif-float-btn.on {
+      color: var(--accent);
+      border-color: rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.15);
+    }
+
+    /* Estado: bloqueado */
+    .notif-float-btn.blocked {
+      color: var(--danger);
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    /* Indicador de estado (punto pequeño) */
+    .notif-float-btn::after {
+      content: '';
+      position: absolute;
+      bottom: 2px; right: 2px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-panel);
+      background: var(--text-dim);
+    }
+    .notif-float-btn.on::after { background: var(--accent); }
+    .notif-float-btn.off::after { background: var(--warn); }
+    .notif-float-btn.blocked::after { background: var(--danger); }
+
+    /* ==================== CHAT ==================== */
     .chat-container { width: 100%; height: 100%; display: flex; flex-direction: column; }
     .chat-messages {
       flex: 1; overflow-y: auto;
-      padding: 20px 16px 100px;
+      padding: 80px 16px 100px;
       display: flex; flex-direction: column; gap: 8px;
       scroll-behavior: smooth;
     }
@@ -285,7 +343,7 @@
   </style>
 </head>
 <body>
-  <!-- PANTALLA DE LOGIN / REGISTRO -->
+  <!-- PANTALLA DE LOGIN -->
   <div class="welcome-screen" id="welcomeScreen" style="display: none;">
     <div class="welcome-card">
       <div class="welcome-icon">
@@ -302,7 +360,7 @@
       </div>
       <button id="loginBtn" class="welcome-btn">Registrarse</button>
 
-      <!-- 🔔 BOTÓN DE NOTIFICACIONES -->
+      <!-- 🔔 BOTÓN DE NOTIFICACIONES EN LOGIN -->
       <button id="notifToggleBtn" class="notif-toggle-btn" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -322,7 +380,16 @@
     </div>
   </div>
 
+  <!-- 💬 CHAT -->
   <div class="chat-container" id="chatContainer" style="display: none;">
+    <!-- 🔔 BOTÓN FLOTANTE DE NOTIFICACIONES -->
+    <button id="notifFloatBtn" class="notif-float-btn off" type="button" title="Notificaciones">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+
     <div class="chat-messages" id="chatMessages"></div>
 
     <form class="input-area" id="messageForm" onsubmit="return false;">
@@ -460,6 +527,7 @@
 
     const notifToggleBtn = document.getElementById('notifToggleBtn');
     const notifToggleLabel = document.getElementById('notifToggleLabel');
+    const notifFloatBtn = document.getElementById('notifFloatBtn');
 
     const displayedIds = new Set();
     let chatInitialized = false;
@@ -489,7 +557,7 @@
         welcomeScreen.style.display = 'flex';
         chatContainer.style.display = 'none';
       }
-      updateNotifButton();
+      updateNotifButtons();
     }
 
     loginBtn.addEventListener('click', async () => {
@@ -523,7 +591,7 @@
             welcomeScreen.style.display = 'none';
             chatContainer.style.display = 'flex';
             initChat();
-            updateNotifButton();
+            updateNotifButtons();
           } else {
             alert('Contraseña incorrecta. Intenta de nuevo.');
           }
@@ -540,7 +608,7 @@
           welcomeScreen.style.display = 'none';
           chatContainer.style.display = 'flex';
           initChat();
-          updateNotifButton();
+          updateNotifButtons();
         }
       } catch (error) {
         console.error(error);
@@ -555,17 +623,21 @@
       if (e.key === 'Enter') loginBtn.click();
     });
 
-    // ==================== BOTÓN DE NOTIFICACIONES ====================
-    function updateNotifButton() {
+    // ==================== ACTUALIZAR BOTONES DE NOTIFICACIONES ====================
+    function updateNotifButtons() {
+      // --- Botón de login ---
       if (!('Notification' in window)) {
         notifToggleBtn.disabled = true;
         notifToggleBtn.classList.remove('enabled', 'blocked');
         notifToggleLabel.textContent = 'Notificaciones no soportadas';
+        notifFloatBtn.classList.remove('off', 'on', 'blocked');
+        notifFloatBtn.style.display = 'none';
         return;
       }
 
       const perm = Notification.permission;
 
+      // --- Botón login ---
       if (perm === 'granted') {
         notifToggleBtn.classList.add('enabled');
         notifToggleBtn.classList.remove('blocked');
@@ -578,10 +650,24 @@
         notifToggleBtn.classList.remove('enabled', 'blocked');
         notifToggleLabel.textContent = 'Activar notificaciones';
       }
+
+      // --- Botón flotante ---
+      notifFloatBtn.classList.remove('off', 'on', 'blocked');
+      if (perm === 'granted') {
+        notifFloatBtn.classList.add('on');
+        notifFloatBtn.title = 'Notificaciones activadas';
+      } else if (perm === 'denied') {
+        notifFloatBtn.classList.add('blocked');
+        notifFloatBtn.title = 'Notificaciones bloqueadas';
+      } else {
+        notifFloatBtn.classList.add('off');
+        notifFloatBtn.title = 'Activar notificaciones';
+      }
     }
 
-    notifToggleBtn.addEventListener('click', async () => {
-      // Si ya están concedidas, desactivar borrando el token
+    // ==================== LÓGICA COMPARTIDA DEL BOTÓN ====================
+    async function handleNotifButtonClick() {
+      // Si ya están concedidas → preguntar si desactivar
       if (Notification.permission === 'granted') {
         const confirmDisable = confirm('¿Desactivar las notificaciones push?\n\nDejarás de recibir avisos de nuevos mensajes.');
         if (!confirmDisable) return;
@@ -602,19 +688,20 @@
           console.error('Error al desactivar:', err);
           alert('No se pudo desactivar. Intenta de nuevo.');
         } finally {
-          updateNotifButton();
+          updateNotifButtons();
         }
         return;
       }
 
-      // Si están bloqueadas, avisar
+      // Si están bloqueadas → avisar
       if (Notification.permission === 'denied') {
-        alert('Las notificaciones están bloqueadas en tu navegador.\n\nDebes habilitarlas manualmente desde la configuración del sitio (icono del candado en la barra de direcciones).');
+        alert('Las notificaciones están bloqueadas en tu navegador.\n\nDebes habilitarlas manualmente desde la configuración del sitio (icono del candado 🔒 en la barra de direcciones).');
         return;
       }
 
       // Pedir permiso
       notifToggleBtn.disabled = true;
+      notifFloatBtn.disabled = true;
       notifToggleLabel.textContent = 'Solicitando permiso...';
 
       try {
@@ -629,9 +716,13 @@
         alert('Error al activar notificaciones.');
       } finally {
         notifToggleBtn.disabled = false;
-        updateNotifButton();
+        notifFloatBtn.disabled = false;
+        updateNotifButtons();
       }
-    });
+    }
+
+    notifToggleBtn.addEventListener('click', handleNotifButtonClick);
+    notifFloatBtn.addEventListener('click', handleNotifButtonClick);
 
     // ==================== NOTIFICACIONES PUSH ====================
     async function requestNotificationPermission() {
@@ -664,25 +755,21 @@
     }
 
     async function registerFCMToken() {
-      // Requiere que el usuario esté logueado para guardar el token
       if (!user || !user.id) {
         console.warn('No hay usuario logueado, no se guarda el token.');
         return null;
       }
 
       try {
-        // 1. Registrar service worker
         if ('serviceWorker' in navigator) {
           await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
           await navigator.serviceWorker.ready;
         }
 
-        // 2. Inicializar messaging
         if (!messaging) {
           messaging = firebase.messaging();
         }
 
-        // 3. Obtener token con VAPID key
         const token = await messaging.getToken({ vapidKey: VAPID_KEY });
         if (!token) {
           console.warn('No se pudo obtener el token FCM.');
@@ -691,7 +778,6 @@
 
         console.log('✅ FCM Token:', token);
 
-        // 4. Guardar token en Firebase
         await tokensRef.child(user.id).set({
           token: token,
           userName: user.name,
@@ -701,7 +787,6 @@
           updatedAt: firebase.database.ServerValue.TIMESTAMP
         });
 
-        // 5. Refresh token
         messaging.onTokenRefresh(async () => {
           try {
             const newToken = await messaging.getToken({ vapidKey: VAPID_KEY });
@@ -717,7 +802,6 @@
           }
         });
 
-        // 6. Mensajes en foreground
         messaging.onMessage((payload) => {
           console.log('📩 Mensaje en foreground:', payload);
           const title = (payload.notification && payload.notification.title) || (payload.data && payload.data.title) || 'Babilonia777';
